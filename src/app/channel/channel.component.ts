@@ -3,16 +3,18 @@ import { ActivatedRoute } from '@angular/router';
 import { SocketService } from '../services/socket.service';
 
 @Component({
-  selector: 'member-list',
-  templateUrl: './member-list.component.html',
-  styleUrls: ['./member-list.component.css']
+  selector: 'channel',
+  templateUrl: './channel.component.html',
+  styleUrls: ['./channel.component.css']
 })
-export class MemberListComponent implements OnInit {
+export class ChannelComponent implements OnInit {
   groupId: string | null = null
   channelId: string | null = null
+  curMessage: string = ""
+  messages: any[] = []
   members: any[] | null = null
 
-  constructor(private route: ActivatedRoute, private socketService: SocketService) { }
+  constructor(private socketService: SocketService, private route: ActivatedRoute) { }
 
   ngOnInit(): void {
     this.route.parent?.paramMap.subscribe(params => {
@@ -23,9 +25,15 @@ export class MemberListComponent implements OnInit {
       this.channelId = params.get('channelId')
     })
 
+    this.socketService.getMessage((messageData: any) => {
+      this.messages.push(messageData)
+    })
+
     this.socketService.getMemberList((data: any) => {
       this.members = data.members
     })
+
+    this.getUsersInChannel();
   }
 
   getUsersInChannel() {
@@ -34,4 +42,10 @@ export class MemberListComponent implements OnInit {
     }
   }
 
+  sendMessage() {
+    if (this.curMessage != "") {
+      this.socketService.sendMessage(this.groupId!, this.channelId!, this.curMessage)
+      this.curMessage = ""
+    }
+  }
 }

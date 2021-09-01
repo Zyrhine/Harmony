@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, Output, OnInit, EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'channel-list',
@@ -6,10 +6,15 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./channel-list.component.css']
 })
 export class ChannelListComponent implements OnInit {
+  @Input() channels: any | undefined = undefined
+  @Output() navigateToChannelEvent = new EventEmitter<string>();
 
   constructor() { }
 
   ngOnInit(): void {
   }
 
+  navigateToChannel(channelId: string) {
+    this.navigateToChannelEvent.emit(channelId)
+  }
 }

@@ -1,1 +1,6 @@
-<p>channel-list works!</p>
+<div>
+    <ul class="d-grid gap-2 p-0">
+        <li *ngFor="let channel of channels" class="btn btn-outline-info" (click)="navigateToChannel(channel._id)">{{channel.name}}</li>
+    </ul>
+</div>
+

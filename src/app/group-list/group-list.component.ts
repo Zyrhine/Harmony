@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { SocketService } from '../services/socket.service';
 
 @Component({
   selector: 'group-list',
@@ -6,10 +7,26 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./group-list.component.css']
 })
 export class GroupListComponent implements OnInit {
+  groups = null
 
-  constructor() { }
+  constructor(private socketService: SocketService) { }
 
   ngOnInit(): void {
+    this.socketService.reqGroupList()
+    this.socketService.getGroupList((groupList: any) => {
+      this.groups = JSON.parse(groupList)
+      console.log("Available Groups:")
+      console.log(this.groups)
+    })
   }
 
+  @Output() navigateToGroupEvent = new EventEmitter<string>();
+
+  navigateToGroup(groupId: string) {
+    this.navigateToGroupEvent.emit(groupId)
+  }
+
+  groupHub() {
+
+  }
 }

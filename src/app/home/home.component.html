@@ -1,0 +1,10 @@
+<div class="overflow-hidden">
+    <div class="row min-vh-100">
+        <div class="col-md-1" style="background-color: #1B1B1B;">
+            <group-list (navigateToGroupEvent)="navigateToGroup($event)"></group-list>
+        </div>
+        <div class="col-md-11">
+            <router-outlet></router-outlet>
+        </div>
+    </div>
+</div>
