@@ -1,4 +1,6 @@
 import { Component, Input, Output, OnInit, EventEmitter } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'channel-list',
@@ -8,13 +10,28 @@ import { Component, Input, Output, OnInit, EventEmitter } from '@angular/core';
 export class ChannelListComponent implements OnInit {
   @Input() channels: any | undefined = undefined
   @Output() navigateToChannelEvent = new EventEmitter<string>();
+  activeChannelId: string | null = null 
 
-  constructor() { }
+  constructor(private modalService: NgbModal) { }
 
   ngOnInit(): void {
+
   }
 
   navigateToChannel(channelId: string) {
-    this.navigateToChannelEvent.emit(channelId)
+    this.navigateToChannelEvent.emit(channelId);
+    this.activeChannelId = channelId;
+  }
+
+  open(content: any) {
+    this.modalService.open(content, {ariaLabelledBy: 'modal-basic-title'}).result.then((result) => {
+      //this.closeResult = `Closed with: ${result}`;
+    }, (reason) => {
+      //this.closeResult = `Dismissed ${this.getDismissReason(reason)}`;
+    });
+  }
+
+  createChannel() {
+
   }
 }

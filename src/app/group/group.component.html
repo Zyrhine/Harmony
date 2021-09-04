@@ -4,15 +4,9 @@
         <channel-list [channels]="group?.channels" (navigateToChannelEvent)="navigateToChannel($event)"></channel-list>
     </div>
     <div class="col-md-10 d-flex flex-column" style="background-color: #3B3B3B;">
-        <div class="align-self-start">
-            <h6 class="text-white py-3">Test Channel</h6>
-        </div>
         <div class="flex-fill d-flex">
             <div class="flex-fill">
                 <router-outlet></router-outlet>
-            </div>
-            <div>
-                <member-list></member-list>
             </div>
         </div>
     </div>

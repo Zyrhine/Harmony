@@ -22,11 +22,6 @@ export class GroupComponent implements OnInit {
 
     this.socketService.getGroupInfo((groupInfo: any) => {
       this.group = new Group(groupInfo._id, groupInfo.name, groupInfo.channels)
-      this.socketService.joinGroupRoom(this.group._id)
-    })
-
-    this.socketService.joined((msg: string) => {
-      this.isInRoom = true
     })
   }
 

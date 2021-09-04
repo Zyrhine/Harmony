@@ -8,38 +8,48 @@ import { SocketService } from '../services/socket.service';
   styleUrls: ['./channel.component.css']
 })
 export class ChannelComponent implements OnInit {
+  channel: any | null = null
+  members: any | null = null
   groupId: string | null = null
   channelId: string | null = null
   curMessage: string = ""
   messages: any[] = []
-  members: any[] | null = null
+  isReady: boolean = false
 
   constructor(private socketService: SocketService, private route: ActivatedRoute) { }
 
   ngOnInit(): void {
-    this.route.parent?.paramMap.subscribe(params => {
-      this.groupId = params.get('groupId')
+    this.socketService.getChannelInfo((channelInfo: string[]) => {
+      this.channel = channelInfo
     })
 
-    this.route.paramMap.subscribe(params => {
-      this.channelId = params.get('channelId')
+    this.socketService.getMemberList((memberList: string[]) => {
+      this.members = memberList
+    })
+
+    this.socketService.getChannelHistory((channelHistory: string[]) => {
+      this.messages = channelHistory
     })
 
     this.socketService.getMessage((messageData: any) => {
       this.messages.push(messageData)
     })
 
-    this.socketService.getMemberList((data: any) => {
-      this.members = data.members
+    this.route.parent?.paramMap.subscribe(params => {
+      this.groupId = params.get('groupId')
     })
 
-    this.getUsersInChannel();
-  }
+    this.route.paramMap.subscribe(params => {
+      this.channelId = params.get('channelId')
+      this.socketService.joinChannel(this.channelId!)
+    })
 
-  getUsersInChannel() {
-    if (this.groupId != null && this.channelId != null) {
+    this.socketService.joinedChannel((msg: string) => {
+      this.socketService.reqChannelInfo(this.groupId!, this.channelId!)
       this.socketService.reqMemberList(this.groupId!, this.channelId!)
-    }
+      this.socketService.reqChannelHistory(this.groupId!, this.channelId!)
+      this.isReady = true
+    })
   }
 
   sendMessage() {

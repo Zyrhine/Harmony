@@ -8,22 +8,26 @@ const SERVER_URL = 'http://localhost:3000/chat';
   providedIn: 'root'
 })
 export class SocketService {
+  private user: any
   private socket: any
 
   constructor() { }
 
   initSocket(): void {
-    this.socket = io(SERVER_URL)
-    this.authenticate()
+    var userString = sessionStorage.getItem("user")
+    if (userString) {
+      this.user = JSON.parse(userString)
+      this.socket = io(SERVER_URL, {
+        auth: {
+          userId: this.user._id,
+          name: this.user.name
+        }
+      })
+    }
   }
 
-  authenticate(): void {
-    var user = sessionStorage.getItem("user")
-    this.socket.emit('auth', user)
-  }
-
-  createRoom(newRoom: any) {
-    this.socket.emit('newRoom', newRoom)
+  createChannel(newChannel: any) {
+    this.socket.emit('newChannel', newChannel)
   }
 
   // Group List
@@ -60,30 +64,46 @@ export class SocketService {
     })
   }
 
-  joinGroupRoom(groupId: string): void {
+  joinChannel(channelId: string): void {
     console.log("Joining group...")
-    this.socket.emit('joinRoom', groupId)
+    this.socket.emit('joinChannel', channelId)
   }
 
-  joined(next: any): void {
-    this.socket.on('joined', (res: any) => {
-      console.log("Joined group.")
+  joinedChannel(next: any): void {
+    this.socket.on('joinedChannel', (res: any) => {
+      console.log("Joined channel.")
       next(res)
     })
   }
 
-  leaveGroupRoom(groupId: any): void {
-    this.socket.emit('leaveRoom', groupId)
+  leaveChannel(channelId: any): void {
+    this.socket.emit('leaveChannel', channelId)
   }
 
   // Channel
-  reqMemberList(groupId: string, channelId: string): void {
-    console.log("Requesting member list...")
-    var data = {
+  reqChannelInfo(groupId: string, channelId: string): void {
+    console.log("Requesting channel information...")
+    var location = {
       groupId: groupId,
       channelId: channelId
     }
-    this.socket.emit('memberList', data)
+    this.socket.emit('channelInfo', location)
+  }
+
+  getChannelInfo(next: any): void {
+    this.socket.on('channelInfo', (channelInfo: any) => {
+      console.log("Received channelInfo.")
+      next(JSON.parse(channelInfo))
+    })
+  }
+
+  reqMemberList(groupId: string, channelId: string): void {
+    console.log("Requesting member list...")
+    var location = {
+      groupId: groupId,
+      channelId: channelId
+    }
+    this.socket.emit('memberList', location)
   }
 
   getMemberList(next: any): void {
@@ -93,8 +113,24 @@ export class SocketService {
     })
   }
 
+  reqChannelHistory(groupId: string, channelId: string) {
+    var location = {
+      groupId: groupId,
+      channelId: channelId
+    }
+    this.socket.emit('channelHistory', location)
+  }
+
+  getChannelHistory(next: any): void {
+    this.socket.on('channelHistory', (channelHistory: any) => {
+      console.log("Received channel history.")
+      next(JSON.parse(channelHistory))
+    })
+  }
+
   sendMessage(groupId: string, channelId: string, message: string): void {
-    this.socket.emit('message', {'groupId': groupId, 'channelId': channelId, 'message': message})
+    console.log(this.user.name)
+    this.socket.emit('message', {'groupId': groupId, 'channelId': channelId, 'name': this.user.name, 'message': message})
   }
 
   getMessage(next: any) {

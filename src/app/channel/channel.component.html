@@ -1,20 +1,37 @@
-<div class="d-flex flex-column h-100">
-    <div class="flex-fill">
-        <ul class="list-unstyled text-white">
-            <li *ngFor="let message of messages">{{message.message}}</li>
-        </ul>
+<div class="row text-white">
+    <h6 class="text-white py-3">{{channel?.name}}</h6>
+</div>
+<div class="text-white d-flex flex-horizontal">
+    <div class="d-flex flex-fill flex-column">
+        <!-- Chat -->
+        <div class="flex-fill">
+            <ul class="list-unstyled text-white">
+                <li *ngFor="let message of messages">{{message.name}}: {{message.message}}</li>
+            </ul>
+        </div>
+        <div class="py-3">
+            <form>
+                <div class="row g-2">
+                    <div class="col-sm-10">
+                        <input class="form-control" id="messageBox" type="text" name="message" autocomplete="off" [(ngModel)]="curMessage"/>
+                    </div>
+                    <div class="col-sm-2">
+                        <button class="btn btn-primary" (click)="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
-    <div class="py-3">
-        <form>
-            <div class="row g-2">
-                <div class="col-sm-10">
-                    <input class="form-control" id="messageBox" type="text" name="message" autocomplete="off" [(ngModel)]="curMessage"/>
-                </div>
-                <div class="col-sm-2">
-                    <button class="btn btn-primary" (click)="sendMessage()">Send</button>
-                </div>
-            </div>
-        </form>
+    <div class="">
+        <!-- Member List -->
+        <p><b>Online - {{members?.onlineMembers.length}}</b></p>
+        <ul class="list-unstyled">
+            <li *ngFor="let member of members?.onlineMembers">{{member}}</li>
+        </ul>
+        <p><b>Offline - {{members?.offlineMembers.length}}</b></p>
+        <ul class="list-unstyled">
+            <li *ngFor="let member of members?.offlineMembers">{{member}}</li>
+        </ul>
     </div>
 </div>
 
