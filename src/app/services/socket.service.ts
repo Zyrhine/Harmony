@@ -30,6 +30,10 @@ export class SocketService {
     }
   }
 
+  disconnect() {
+    this.socket.close();
+  }
+
   /*
   *   GROUPS
   */

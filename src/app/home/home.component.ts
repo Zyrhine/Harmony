@@ -33,4 +33,10 @@ export class HomeComponent implements OnInit {
   groupHub() {
     this.router.navigate(['./group-index' ], { relativeTo: this.route });
   }
+
+  logout() {
+    sessionStorage.clear();
+    this.router.navigate(['../login' ], { relativeTo: this.route });
+    this.socketService.disconnect();
+  }
 }
