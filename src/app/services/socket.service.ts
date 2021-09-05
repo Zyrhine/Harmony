@@ -23,14 +23,29 @@ export class SocketService {
           name: this.user.name
         }
       })
+
+      this.socket.on('refreshGroupList', () => {
+        this.reqGroupList()
+      })
     }
   }
 
-  createChannel(newChannel: any) {
-    this.socket.emit('newChannel', newChannel)
+  /*
+  *   GROUPS
+  */
+
+  reqGroupIndex() {
+    console.log("Requesting group index...")
+    this.socket.emit('groupIndex')
   }
 
-  // Group List
+  getGroupIndex(next: any) {
+    this.socket.on('groupIndex', (res: any) => {
+      console.log("Received group index.")
+      next(JSON.parse(res))
+    })
+  }
+
   reqGroupList() {
     console.log("Requesting group list...")
     this.socket.emit('groupList')
@@ -39,19 +54,10 @@ export class SocketService {
   getGroupList(next: any) {
     this.socket.on('groupList', (res: any) => {
       console.log("Received group list.")
-      next(res)
+      next(JSON.parse(res))
     })
   }
 
-  reqAllGroups() {
-    this.socket.emit('groupListAll')
-  }
-
-  getAllGroups(next: any) {
-    this.socket.on('groupListAll', (res: any) => next(res))
-  }
-
-  // Group
   reqGroupInfo(groupId: string) {
     console.log("Requesting group info...")
     this.socket.emit('groupInfo', groupId)
@@ -64,8 +70,65 @@ export class SocketService {
     })
   }
 
-  joinChannel(channelId: string): void {
+  createGroup(name: string) {
+    this.socket.emit('createGroup', name)
+  }
+
+  updateGroup(groupData: any) {
+    this.socket.emit('updateGroup', groupData)
+  }
+
+  deleteGroup(groupId: string) {
+    this.socket.emit('deleteGroup', groupId)
+  }
+
+  joinGroup(groupId: string): void {
     console.log("Joining group...")
+    this.socket.emit('joinGroup', groupId)
+  }
+
+  joinedGroup(next: any): void {
+    this.socket.on('joinedGroup', (res: any) => {
+      console.log("Joined group.")
+      next(res)
+    })
+  }
+
+
+  /*
+  *   CHANNELS
+  */
+
+  reqChannelList(groupId: string): void {
+    console.log("Requesting channel list...")
+    this.socket.emit('channelList', groupId)
+  }
+
+  getChannelList(next: any): void {
+    this.socket.on('channelList', (channelList: any) => {
+      console.log("Received channel list.")
+      next(JSON.parse(channelList))
+    })
+  }
+
+  createChannel(groupId: string, name: string) {
+    var data = {
+      groupId: groupId,
+      name: name
+    }
+    this.socket.emit('createChannel', data)
+  }
+
+  updateChannel(channelData: any) {
+    this.socket.emit('updateChannel', channelData)
+  }
+
+  deleteChannel(groupId:string, channelId: string) {
+    this.socket.emit('deleteChannel', {groupId, channelId})
+  }
+
+  joinChannel(channelId: string): void {
+    console.log("Joining channel...")
     this.socket.emit('joinChannel', channelId)
   }
 
@@ -80,14 +143,9 @@ export class SocketService {
     this.socket.emit('leaveChannel', channelId)
   }
 
-  // Channel
-  reqChannelInfo(groupId: string, channelId: string): void {
+  reqChannelInfo(channelId: string): void {
     console.log("Requesting channel information...")
-    var location = {
-      groupId: groupId,
-      channelId: channelId
-    }
-    this.socket.emit('channelInfo', location)
+    this.socket.emit('channelInfo', channelId)
   }
 
   getChannelInfo(next: any): void {
@@ -97,6 +155,9 @@ export class SocketService {
     })
   }
 
+  /*
+  *   CHANNEL CHAT
+  */
   reqMemberList(groupId: string, channelId: string): void {
     console.log("Requesting member list...")
     var location = {

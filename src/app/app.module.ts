@@ -3,8 +3,6 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { ChannelListComponent } from './channel-list/channel-list.component';
-import { GroupListComponent } from './group-list/group-list.component';
 import { GroupIndexComponent } from './group-index/group-index.component';
 import { GroupSettingsComponent } from './group-settings/group-settings.component';
 import { GroupComponent } from './group/group.component';
@@ -18,8 +16,6 @@ import { HttpClientModule } from '@angular/common/http';
 @NgModule({
   declarations: [
     AppComponent,
-    ChannelListComponent,
-    GroupListComponent,
     GroupIndexComponent,
     GroupSettingsComponent,
     GroupComponent,

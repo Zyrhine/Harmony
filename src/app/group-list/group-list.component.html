@@ -1,8 +1,0 @@
-<div class="mx-auto" style="width: 50px">
-    <ul class="nav nav-pills nav-fill flex-column">
-        <li *ngFor="let group of groups" class="nav-item">
-            <a class="nav-link" (click)="navigateToGroup(group._id)">{{group.name}}</a>
-        </li>
-    </ul>
-    <button class="btn btn-outline-primary group-btn" (click)="groupHub()">Hub</button>
-</div>

@@ -45,7 +45,7 @@ export class ChannelComponent implements OnInit {
     })
 
     this.socketService.joinedChannel((msg: string) => {
-      this.socketService.reqChannelInfo(this.groupId!, this.channelId!)
+      this.socketService.reqChannelInfo(this.channelId!)
       this.socketService.reqMemberList(this.groupId!, this.channelId!)
       this.socketService.reqChannelHistory(this.groupId!, this.channelId!)
       this.isReady = true
