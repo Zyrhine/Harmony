@@ -51,6 +51,18 @@
             <label for="channelNameInput" class="form-label">Channel Name</label>
             <input id="channelNameInput" class="form-control" type="text" [(ngModel)]="channelModel.name" name="channelNameInput" placeholder="Channel Name">
         </form>
+
+        <label class="form-label">Members</label>
+        <div *ngFor="let member of channelMembers">
+            {{member.name}}
+            <button class="btn btn-danger" (click)="removeChannelMember(member._id)"><i class="bi bi-person-dash-fill"></i></button>
+        </div>
+    
+        <label for="memberNameInput" class="form-label">Add Member</label>
+        <div *ngFor="let member of availableChannelMembers">
+            {{member.name}}
+            <button class="btn btn-primary" (click)="addChannelMember(member._id)"><i class="bi bi-person-plus-fill"></i></button>
+        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-danger" (click)="deleteChannel(); modal.close()">Delete Channel</button>
@@ -69,6 +81,17 @@
             <label for="groupNameInput" class="form-label">Group Name</label>
             <input id="groupNameInput" class="form-control" type="text" [(ngModel)]="groupModel.name" name="groupNameInput" placeholder="Group Name">
         </form>
+
+        <label class="form-label">Members</label>
+        <div *ngFor="let member of groupMembers">
+            {{member.name}}
+            <button class="btn btn-danger" (click)="removeGroupMember(member._id)"><i class="bi bi-person-dash-fill"></i></button>
+        </div>
+    
+        <label for="memberNameInput" class="form-label">Add Member</label>
+        <input #memberNameInput id="memberNameInput" class="form-control" type="email" name="memberNameInput" placeholder="email">
+        <button class="btn btn-primary" (click)="addGroupMember(memberNameInput.value)">Add</button>
+
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-danger" (click)="deleteGroup(); modal.close()">Delete Group</button>

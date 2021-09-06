@@ -2,14 +2,20 @@ const { ObjectId } = require("mongodb")
 
 module.exports = {
     connect: function(db, io, PORT) {
-        function getChannelList(groupId, next) {
+        function getChannelList(groupId, user, next) {
             const collection = db.collection('channels');
             var oid = new ObjectId(groupId);
-            collection.find({groupId: oid}).toArray().then(result => {
+            if (user.role == 3) {
+                query = {groupId: oid, members: new ObjectId(user._id)}
+            } else {
+                query = {groupId: oid}
+            }
+
+            collection.find(query).toArray().then(result => {
                 if (result) {
                     next(result)
                 } else {
-                    console.log("No document matches the provided query.");
+                    console.log("No channels match the provided query.");
                 }
             })
             .catch(err => console.error(`Failed to get channel list: ${err}`))
@@ -19,7 +25,7 @@ module.exports = {
             // Find the groups the user is in and send it back
             const collection = db.collection('groups');
             var oid = new ObjectId(userId);
-            collection.find({members: [oid]}).toArray().then(result => {
+            collection.find({members: oid}).toArray().then(result => {
                 if (result) {
                     next(result)
                 } else {
@@ -41,6 +47,48 @@ module.exports = {
                 }
             })
             .catch(err => console.error(`Failed to get group info: ${err}`));
+        }
+
+        function getGroupMembers(groupId, next) {
+            const collection = db.collection('groups')
+            const agg = [
+                {'$match': {'_id': new ObjectId(groupId)}},
+                {'$project': {'members': 1}},
+                {'$lookup': {
+                    'from': 'users', 
+                    'localField': 'members', 
+                    'foreignField': '_id', 
+                    'as': 'members'
+                }}];
+            collection.aggregate(agg).toArray().then(result => {
+                if (result) {
+                    if (result[0]) { // Some request issue here to fix later
+                        next(result[0].members)
+                    }
+                } else {
+                    console.log("No document matches the provided query.");
+                }
+            })
+        }
+
+        function getChannelMembers(channelId, next) {
+            const collection = db.collection('channels')
+            const agg = [
+                {'$match': {'_id': new ObjectId(channelId)}},
+                {'$project': {'members': 1}},
+                {'$lookup': {
+                    'from': 'users', 
+                    'localField': 'members', 
+                    'foreignField': '_id', 
+                    'as': 'members'
+                }}];
+            collection.aggregate(agg).toArray().then(result => {
+                if (result) {
+                    next(result[0].members)
+                } else {
+                    console.log("No document matches the provided query.");
+                }
+            })
         }
 
         var userSessions = []
@@ -244,17 +292,10 @@ module.exports = {
                 }
             })
 
-            socket.on('channelList', (groupId) => {
-                const collection = db.collection('channels');
-                var oid = new ObjectId(groupId);
-                collection.find({groupId: oid}).toArray().then(result => {
-                    if (result) {
-                        chat.emit('channelList', JSON.stringify(result));
-                    } else {
-                        console.log("No document matches the provided query.");
-                    }
+            socket.on('channelList', ({groupId, user}) => {
+                getChannelList(groupId, user, (channelList) => {
+                    chat.emit('channelList', JSON.stringify(channelList));
                 })
-                .catch(err => console.error(`Failed to get channel list: ${err}`));
             })
 
             // Start listening to channel
@@ -303,10 +344,8 @@ module.exports = {
                     members: []
                 }
                 collection.insertOne(channelDoc).then(() => {
-                    // Update the channel list for everyone in the group
-                    getChannelList(channel.groupId, (channelList) => {
-                        chat.to(channel.groupId).emit('channelList', JSON.stringify(channelList));
-                    })
+                    // Tell everyone in the group to update their channel list
+                    chat.to(channel.groupId).emit('refreshChannelList', channel.groupId);
                 }).catch(err => console.error(`Failed to insert document: ${err}`));
             })
 
@@ -315,10 +354,8 @@ module.exports = {
                 const collection = db.collection('channels')
                 var oid = new ObjectId(channel._id);
                 collection.updateOne({_id: oid}, {$set: {name: channel.name}}).then(() => {
-                    // Update the channel list for everyone in the group
-                    getChannelList(channel.groupId, (channelList) => {
-                        chat.to(channel.groupId).emit('channelList', JSON.stringify(channelList));
-                    })
+                    // Tell everyone in the group to update their channel list
+                    chat.to(channel.groupId).emit('refreshChannelList', channel.groupId);
                 }).catch(err => console.error(`Failed to update document: ${err}`));
             })
 
@@ -332,10 +369,8 @@ module.exports = {
                 messagesCollection.deleteMany({channelId: oid}).then(() => {
                     // Delete the channel
                     channelsCollection.deleteOne({_id: oid}).then(() => {
-                        // Update the channel list for everyone in the group
-                        getChannelList(groupId, (channelList) => {
-                            chat.to(groupId).emit('channelList', JSON.stringify(channelList));
-                        })
+                        // Tell everyone in the group to update their channel list
+                        chat.to(groupId).emit('refreshChannelList', groupId);
                     }).catch(err => console.error(`Failed to delete the channel: ${err}`));
                 }).catch(err => console.error(`Failed to delete channel messages: ${err}`));
             })
@@ -388,6 +423,93 @@ module.exports = {
                     channelHistory.reverse()
                     socket.emit('channelHistory', JSON.stringify(channelHistory));
                 }).catch(err => console.error(`Failed to find channelHistory document: ${err}`))
+            })
+
+            // Get the list of members in a group
+            socket.on('groupMembers', (groupId) => {
+                getGroupMembers(groupId, (memberList) => {
+                    socket.emit('groupMembers', JSON.stringify(memberList))
+                })
+            })
+
+            // Add a member to a group
+            socket.on('addGroupMember', (data) => {
+                const userCollection = db.collection('users')
+                const groupCollection = db.collection('groups')
+                
+                // Find the user being referenced
+                userCollection.findOne({email: data.email}).then(user => {
+                    if (user) {
+                        var oid = new ObjectId(user._id)
+                        var gOid = new ObjectId(data.groupId)
+                        // Add the user to the member list
+                        groupCollection.updateOne({_id: gOid}, {$push: {members: oid}}).then(() => {
+                            // Update their member list
+                            getGroupMembers(data.groupId, (memberList) => {
+                                socket.emit('groupMembers', JSON.stringify(memberList))
+                            })
+                        })
+                    }
+                })
+            })
+
+            // Remove a member from a group
+            socket.on('removeGroupMember', (data) => {
+                const collection = db.collection('groups')
+                var uOid = new ObjectId(data.userId)
+                var gOid = new ObjectId(data.groupId)
+
+                // Remove the user from the member list
+                collection.updateOne({_id: gOid}, {$pull: {members: uOid}}).then(() => {
+                    // Update their member list
+                    getGroupMembers(data.groupId, (memberList) => {
+                        socket.emit('groupMembers', JSON.stringify(memberList))
+                    })
+                })
+            })
+
+            // Return the members of a channel
+            socket.on('channelMembers', (channelId) => {
+                getChannelMembers(channelId, (memberList) => {
+                    socket.emit('channelMembers', JSON.stringify(memberList))
+                })
+            }) 
+
+            // Return the members of a group that are able to be added to a channel
+            socket.on('availableChannelMembers', (channelId) => {
+                getAvailableChannelMembers(channelId, (memberList) => {
+                    socket.emit('availableChannelMembers', JSON.stringify(memberList))
+                })
+            }) 
+
+            // Add a member to a channel
+            socket.on('addChannelMember', ({channelId, userId}) => {
+                const collection = db.collection('channels')
+                var cOid = new ObjectId(channelId)
+                var uOid = new ObjectId(userId)
+
+                // Add the user to the channel member list
+                collection.updateOne({_id: cOid}, {$push: {members: uOid}}).then(() => {
+                    // Update their channel member list
+                    getChannelMembers(channelId, (memberList) => {
+                        socket.emit('channelMembers', JSON.stringify(memberList))
+                    })
+                })
+            })
+
+            // Remove a member from a channel
+            socket.on('removeChannelMember', ({channelId, userId}) => {
+                const collection = db.collection('channels')
+                var cOid = new ObjectId(channelId)
+                var uOid = new ObjectId(userId)
+
+                // Remove the user from the channel member list
+                collection.updateOne({_id: cOid}, {$pull: {members: uOid}}).then(() => {
+                    // Update their channel member list
+                    getChannelMembers(channelId, (memberList) => {
+                        socket.emit('channelMembers', JSON.stringify(memberList))
+                    })
+                })
             })
 
             // Send the list of online and offline members for a channel

@@ -27,6 +27,14 @@ export class SocketService {
       this.socket.on('refreshGroupList', () => {
         this.reqGroupList()
       })
+
+      this.socket.on('refreshChannelList', (groupId: string) => {
+        this.reqChannelList(groupId)
+      })
+
+      this.socket.on('refreshChannelMembers', (channelId: string) => {
+        this.reqChannelMembers(channelId)
+      })
     }
   }
 
@@ -64,6 +72,72 @@ export class SocketService {
 
   promoteUser(userId: string) {
     this.socket.emit('promoteUser', userId)
+  }
+
+  reqGroupMembers(groupId: string) {
+    console.log("Requesting group members...")
+    this.socket.emit('groupMembers', groupId)
+  }
+
+  getGroupMembers(next: any) {
+    this.socket.on('groupMembers', (memberList: any) => {
+      next(JSON.parse(memberList))
+    })
+  }
+
+  addGroupMember(groupId: string, email: string) {
+    var data = {
+      groupId: groupId,
+      email: email
+    }
+    this.socket.emit('addGroupMember', data)
+  }
+
+  removeGroupMember(groupId: string, userId: string) {
+    var data = {
+      groupId: groupId,
+      userId: userId
+    }
+    this.socket.emit('removeGroupMember', data)
+  }
+
+  reqChannelMembers(channelId: string) {
+    console.log("Requesting channel members...")
+    this.socket.emit('channelMembers', channelId)
+  }
+
+  getChannelMembers(next: any) {
+    this.socket.on('channelMembers', (memberList: any) => {
+      console.log("Received channel members...")
+      next(JSON.parse(memberList))
+    })
+  }
+
+  reqAvailableChannelMembers(channelId: string) {
+    console.log("Requesting group members...")
+    this.socket.emit('availableChannelMembers', channelId)
+  }
+
+  getAvailableChannelMembers(next: any) {
+    this.socket.on('availableChannelMembers', (memberList: any) => {
+      next(JSON.parse(memberList))
+    })
+  }
+
+  addChannelMember(channelId: string, userId: string) {
+    var data = {
+      channelId: channelId,
+      userId: userId
+    }
+    this.socket.emit('addChannelMember', data)
+  }
+
+  removeChannelMember(channelId: string, userId: string) {
+    var data = {
+      channelId: channelId,
+      userId: userId
+    }
+    this.socket.emit('removeChannelMember', data)
   }
 
   /*
@@ -124,9 +198,9 @@ export class SocketService {
   }
 
   joinedGroup(next: any): void {
-    this.socket.on('joinedGroup', (res: any) => {
+    this.socket.on('joinedGroup', () => {
       console.log("Joined group.");
-      next(res);
+      next();
     });
   }
 
@@ -137,7 +211,11 @@ export class SocketService {
 
   reqChannelList(groupId: string): void {
     console.log("Requesting channel list...")
-    this.socket.emit('channelList', groupId)
+    var data = {
+      groupId: groupId,
+      user: this.user
+    }
+    this.socket.emit('channelList', data)
   }
 
   getChannelList(next: any): void {
