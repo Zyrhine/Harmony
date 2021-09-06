@@ -1,13 +1,15 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subscription } from 'rxjs';
 import { SocketService } from '../services/socket.service';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-control-panel',
   templateUrl: './control-panel.component.html',
   styleUrls: ['./control-panel.component.css']
 })
-export class ControlPanelComponent implements OnInit {
+export class ControlPanelComponent implements OnInit, OnDestroy {
   @ViewChild('newUserModal') newUserModal: any;
   @ViewChild('editUserModal') editUserModal: any;
 
@@ -17,10 +19,18 @@ export class ControlPanelComponent implements OnInit {
   passwordInput: string = ""
   emailInput: string = ""
 
-  constructor(private socketService: SocketService, private modalService: NgbModal) { }
+  // Subscriptions
+  noticeSub: Subscription | null = null
+  userListSub: Subscription | null = null
+
+  constructor(private socketService: SocketService, private modalService: NgbModal, public userService: UserService) { }
 
   ngOnInit(): void {
-    this.socketService.getUserList((userList: any) => {
+    this.noticeSub = this.socketService.onNotice().subscribe((msg: string) => {
+      alert(msg)
+    })
+
+    this.userListSub = this.socketService.onUserList().subscribe((userList: any) => {
       this.users = userList
     })
 
@@ -69,5 +79,10 @@ export class ControlPanelComponent implements OnInit {
 
   promoteUser(userId: string) {
     this.socketService.promoteUser(userId)
+  }
+
+  ngOnDestroy() {
+    this.noticeSub?.unsubscribe();
+    this.userListSub?.unsubscribe();
   }
 }

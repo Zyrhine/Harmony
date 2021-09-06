@@ -3,7 +3,6 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { GroupIndexComponent } from './group-index/group-index.component';
 import { GroupSettingsComponent } from './group-settings/group-settings.component';
 import { GroupComponent } from './group/group.component';
 import { FormsModule } from '@angular/forms';
@@ -17,7 +16,6 @@ import { ControlPanelComponent } from './control-panel/control-panel.component';
 @NgModule({
   declarations: [
     AppComponent,
-    GroupIndexComponent,
     GroupSettingsComponent,
     GroupComponent,
     ChannelComponent,

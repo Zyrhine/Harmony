@@ -1,10 +1,15 @@
 <h1>Control Panel</h1>
 <h2>Users</h2>
 <div *ngFor="let user of users">
-    {{user.name}}
-    <button *ngIf="user.role > 0" class="btn btn-info" (click)="promoteUser(user._id)">Promote</button>
-    <button class="btn btn-info" (click)="openEditUserModal(user._id)">Edit User</button>
-    <button class="btn btn-danger" (click)="deleteUser(user._id)">Delete User</button>
+    <div [ngSwitch]="user.role" class="d-inline-block me-2">
+        <p *ngSwitchCase="0">[Super Admin] {{user.name}}</p>
+        <p *ngSwitchCase="1">[Group Admin] {{user.name}}</p>
+        <p *ngSwitchCase="2">[Assistant] {{user.name}}</p>
+        <p *ngSwitchCase="3">[User] {{user.name}}</p>
+    </div>
+    <button *ngIf="user.role > 0" class="btn btn-info me-2" (click)="promoteUser(user._id)">Promote</button>
+    <button class="btn btn-info me-2" (click)="openEditUserModal(user._id)"><i class="bi bi-pen-fill"></i></button>
+    <button *ngIf="userService.role == 0" class="btn btn-danger me-2" (click)="deleteUser(user._id)"><i class="bi bi-person-x-fill"></i></button>
 </div>
 <button class="btn btn-primary" (click)="openNewUserModal()">New User</button>
 

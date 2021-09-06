@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ChannelComponent } from './channel/channel.component';
 import { ControlPanelComponent } from './control-panel/control-panel.component';
-import { GroupIndexComponent } from './group-index/group-index.component';
 import { GroupComponent } from './group/group.component';
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
@@ -25,10 +24,6 @@ const routes: Routes = [
             component: ChannelComponent
           }
         ]
-      },
-      {
-        path: 'group-index',
-        component: GroupIndexComponent,
       },
       {
         path: 'control-panel',

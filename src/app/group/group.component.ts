@@ -1,15 +1,16 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SocketService } from '../services/socket.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { UserService } from '../services/user.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'group',
   templateUrl: './group.component.html',
   styleUrls: ['./group.component.css']
 })
-export class GroupComponent implements OnInit {
+export class GroupComponent implements OnInit, OnDestroy {
   @ViewChild('editChannelModal') editChannelModal: any;
   @ViewChild('editGroupModal') editGroupModal: any;
   groupId: string | null = null;
@@ -23,17 +24,45 @@ export class GroupComponent implements OnInit {
   groupModel: any = null;
 
   groupMembers: any = null;
+  groupAssistants: any = null;
+
   channelMembers: any = null;
   availableChannelMembers: any = null;
+
+  // Subscriptions
+  channelListSub: Subscription | null = null
+  groupInfoSub: Subscription | null = null
+  joinedGroupSub: Subscription | null = null
+  routeSub: Subscription | null = null
+  groupMembersSub: Subscription | null = null
+  channelMembersSub: Subscription | null = null
+
+  canEditChannel: boolean = false
+  canEditGroup: boolean = false
 
   constructor(private router: Router, private route: ActivatedRoute, private socketService: SocketService, private modalService: NgbModal, public userService: UserService) { }
 
   ngOnInit(): void {
-    this.socketService.getGroupMembers((memberList: any) => {
-      this.groupMembers = memberList;
+    this.groupMembersSub = this.socketService.onGroupMembers().subscribe((memberList: any) => {
+      console.log("Got group members")
+      this.groupMembers = memberList.members;
+      this.groupAssistants = memberList.assistants;
+
+      if (this.userService.role! < 2) {
+        // Allow Super Admin and Group Admin
+        this.canEditChannel = true;
+        this.canEditGroup = true;
+      } else {
+        console.log("Checking is assistant")
+        // Allow Group Assistant
+        var isAssistant = this.groupAssistants.find((user: any) => user._id == this.userService.id)
+        if (isAssistant) {
+          this.canEditChannel = true;
+        }
+      }
     })
 
-    this.socketService.getChannelMembers((memberList: any) => {
+    this.channelMembersSub = this.socketService.onChannelMembers().subscribe((memberList: any) => {
       this.channelMembers = memberList;
 
       // Find group members not in channel members
@@ -48,32 +77,34 @@ export class GroupComponent implements OnInit {
       this.availableChannelMembers = membersNotInChannel
     })
 
-    this.socketService.getChannelList((channelList: any) => {
+    this.channelListSub = this.socketService.onChannelList().subscribe((channelList: any) => {
+      console.log("Got tha channel list.")
       this.channels = channelList;
       this.router.navigate(['./'], { relativeTo: this.route });
     })
 
-    this.route.params.subscribe(params => {
+    this.groupInfoSub = this.socketService.onGroupInfo().subscribe((groupInfo: any) => {
+      this.group = new Group(groupInfo._id, groupInfo.name, groupInfo.members);
+    })
+
+    this.joinedGroupSub = this.socketService.onJoinedGroup().subscribe(() => {
+      console.log("Joined group.")
+      this.socketService.reqGroupInfo(this.groupId!);
+      this.socketService.reqChannelList(this.groupId!);
+      this.socketService.reqGroupMembers(this.groupId!);
+    });
+
+    this.routeSub = this.route.params.subscribe(params => {
       this.groupId = params.groupId;
 
       if (this.groupId != null) {
         this.socketService.joinGroup(this.groupId);
       }
     })
-
-    this.socketService.getGroupInfo((groupInfo: any) => {
-      this.group = new Group(groupInfo._id, groupInfo.name, groupInfo.members, groupInfo.roles);
-    })
-
-    this.socketService.joinedGroup(() => {
-      this.socketService.reqGroupInfo(this.groupId!);
-      this.socketService.reqChannelList(this.groupId!);
-      this.socketService.reqGroupMembers(this.groupId!);
-    });
   }
 
   navigateToChannel(channelId: string) {
-    console.log("Navigated to " + channelId)
+    console.log("Navigated to channel: " + channelId)
     this.activeChannelId = channelId;
     this.router.navigate(['./channel', channelId ], { relativeTo: this.route });
   }
@@ -103,6 +134,23 @@ export class GroupComponent implements OnInit {
     this.socketService.deleteGroup(this.groupId!);
   }
 
+  addGroupMember(email: string) {
+    this.socketService.addGroupMember(this.groupId!, email);
+  }
+
+  removeGroupMember(userId: string) {
+    this.socketService.removeGroupMember(this.groupId!, userId);
+  }
+
+  addGroupAssistant(userId: string) {
+    console.log(userId)
+    this.socketService.addGroupAssistant(this.groupId!, userId);
+  }
+
+  removeGroupAssistant(userId: string) {
+    this.socketService.removeGroupAssistant(this.groupId!, userId);
+  }
+
   // Channel Management
   createChannel() {
     if (this.channelNameInput != "") {
@@ -128,28 +176,29 @@ export class GroupComponent implements OnInit {
     }
   }
 
-  deleteChannel() {
-    this.socketService.deleteChannel(this.channelModel.groupId, this.channelModel._id);
+  addChannelMember(userId: string) {
+    this.socketService.addChannelMember(this.groupId!, this.channelModel!._id, userId);
+  }
+
+  removeChannelMember(userId: string) {
+    this.socketService.removeChannelMember(this.groupId!, this.channelModel!._id, userId);
   }
 
   saveChannel() {
     this.socketService.updateChannel(this.channelModel);
   }
 
-  addGroupMember(email: string) {
-    this.socketService.addGroupMember(this.groupId!, email);
+  deleteChannel() {
+    this.socketService.deleteChannel(this.channelModel.groupId, this.channelModel._id);
   }
 
-  removeGroupMember(userId: string) {
-    this.socketService.removeGroupMember(this.groupId!, userId);
-  }
-
-  addChannelMember(userId: string) {
-    this.socketService.addChannelMember(this.channelModel!._id, userId);
-  }
-
-  removeChannelMember(userId: string) {
-    this.socketService.removeChannelMember(this.channelModel!._id, userId);
+  ngOnDestroy() {
+    this.channelListSub?.unsubscribe();
+    this.groupInfoSub?.unsubscribe();
+    this.joinedGroupSub?.unsubscribe();
+    this.routeSub?.unsubscribe();
+    this.groupMembersSub?.unsubscribe();
+    this.channelMembersSub?.unsubscribe();
   }
 }
 
@@ -157,12 +206,10 @@ class Group {
   _id: string
   name: string
   members: object[]
-  roles: object[]
 
-  constructor(_id: string, name: string, members: object[], roles: object[]) {
+  constructor(_id: string, name: string, members: object[]) {
     this._id = _id
     this.name = name
     this.members = members
-    this.roles = roles
   }
 }

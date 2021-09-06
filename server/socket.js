@@ -5,7 +5,7 @@ module.exports = {
         function getChannelList(groupId, user, next) {
             const collection = db.collection('channels');
             var oid = new ObjectId(groupId);
-            if (user.role == 3) {
+            if (user.role > 1) {
                 query = {groupId: oid, members: new ObjectId(user._id)}
             } else {
                 query = {groupId: oid}
@@ -53,17 +53,23 @@ module.exports = {
             const collection = db.collection('groups')
             const agg = [
                 {'$match': {'_id': new ObjectId(groupId)}},
-                {'$project': {'members': 1}},
+                {'$project': {'members': 1, 'assistants': 1}},
                 {'$lookup': {
                     'from': 'users', 
                     'localField': 'members', 
                     'foreignField': '_id', 
                     'as': 'members'
+                }},
+                {'$lookup': {
+                    'from': 'users', 
+                    'localField': 'assistants', 
+                    'foreignField': '_id', 
+                    'as': 'assistants'
                 }}];
             collection.aggregate(agg).toArray().then(result => {
                 if (result) {
                     if (result[0]) { // Some request issue here to fix later
-                        next(result[0].members)
+                        next(result[0])
                     }
                 } else {
                     console.log("No document matches the provided query.");
@@ -109,7 +115,7 @@ module.exports = {
             socket.on('userList', () => {
                 const collection = db.collection('users');
                 collection.find().toArray().then(userList => {
-                    socket.emit('userList', JSON.stringify(userList));
+                    socket.emit('userList', userList);
                 }).catch(err => console.error(`Failed to get user list: ${err}`));
             })
 
@@ -120,15 +126,21 @@ module.exports = {
                     email: user.email,
                     password: user.password,
                     name: user.name,
-                    role: 3
+                    role: 2
                 }
 
                 collection.insertOne(userDoc).then(() => {
                     // Update their user list
                     collection.find().toArray().then(userList => {
-                        socket.emit('userList', JSON.stringify(userList));
+                        socket.emit('userList', userList);
                     }).catch(err => console.error(`Failed to get user list: ${err}`));
-                }).catch(err => console.error(`Failed to insert new user: ${err}`));
+                }).catch(err => {
+                    if (err.code == 11000) {
+                        socket.emit('notice', "User already exists");
+                    } else {
+                        console.error(`Failed to insert new user: ${err}`)
+                    }
+                });
             })
 
             // Update the details for an existing user
@@ -138,7 +150,7 @@ module.exports = {
                 collection.updateOne({_id: oid}, {$set: {email: user.email, password: user.password, name: user.name}}).then(() => {
                     // Update their user list
                     collection.find().toArray().then(userList => {
-                        socket.emit('userList', JSON.stringify(userList));
+                        socket.emit('userList', userList);
                     }).catch(err => console.error(`Failed to get user list: ${err}`));
                 }).catch(err => console.error(`Failed to update user: ${err}`));
             })
@@ -150,7 +162,7 @@ module.exports = {
                 collection.deleteOne({_id: oid}).then(() => {
                     // Update their user list
                     collection.find().toArray().then(userList => {
-                        socket.emit('userList', JSON.stringify(userList));
+                        socket.emit('userList', userList);
                     }).catch(err => console.error(`Failed to get user list: ${err}`));
                 }).catch(err => console.error(`Failed to delete user: ${err}`));
             })
@@ -162,7 +174,7 @@ module.exports = {
                 collection.updateOne({_id: oid, role: {$gt : 0}}, {$inc: {role: -1} }).then(() => {
                     // Update their user list
                     collection.find().toArray().then(userList => {
-                        socket.emit('userList', JSON.stringify(userList));
+                        socket.emit('userList', userList);
                     }).catch(err => console.error(`Failed to get user list: ${err}`));
                 }).catch(err => console.error(`Failed to update user: ${err}`));
             })
@@ -175,7 +187,7 @@ module.exports = {
                 // Get all available groups
                 const collection = db.collection('groups');
                 collection.find().toArray().then(groupList => {
-                    socket.emit('groupIndex', JSON.stringify(groupList));
+                    socket.emit('groupIndex', groupList);
                 }).catch(err => console.error(`Failed to get group index: ${err}`));
             })
 
@@ -186,7 +198,7 @@ module.exports = {
             // Send back a list of groups the user is in
             socket.on('groupList', () => {
                 getGroupList(socket.userId, (groupList) => {
-                    socket.emit('groupList', JSON.stringify(groupList));
+                    socket.emit('groupList', groupList);
                 })
             })
 
@@ -200,13 +212,14 @@ module.exports = {
                 var userOid = new ObjectId(socket.userId)
                 groupDoc = {
                     name: name,
-                    members: [userOid]
+                    members: [userOid],
+                    assistants: []
                 }
 
                 collection.insertOne(groupDoc).then(() => {
                     // Update the group list for the user
                     getGroupList(socket.userId, (groupList) => {
-                        socket.emit('groupList', JSON.stringify(groupList));
+                        socket.emit('groupList', groupList);
                     })
                 }).catch(err => console.error(`Failed to insert document: ${err}`));
             })
@@ -215,9 +228,10 @@ module.exports = {
                 const collection = db.collection('groups')
                 var oid = new ObjectId(group._id);
                 collection.updateOne({_id: oid}, {$set: {name: group.name}}).then(() => {
-                    // Update the groupInfo for everyone in the group room
+                    // Update the groupList and groupInfo for everyone in the group room
                     getGroupInfo(group._id, (groupInfo) => {
-                        chat.to(group._id).emit('groupInfo', JSON.stringify(groupInfo));
+                        chat.to(group._id).emit('refreshGroupList');
+                        chat.to(group._id).emit('groupInfo', groupInfo);
                     })
                 }).catch(err => console.error(`Failed to update document: ${err}`));
             })
@@ -235,7 +249,7 @@ module.exports = {
                     channelsCollection.deleteMany({groupId: oid}).then(() => {
                         // Delete the group
                         groupsCollection.deleteOne({_id: oid}).then(() => {
-                            // Remove everyone listening to the groups and channels
+                            // TODO: Remove everyone listening to the groups and channels
 
 
                             // Tell everyone in the group to refresh their group lists
@@ -251,7 +265,7 @@ module.exports = {
                 var oid = new ObjectId(groupId);
                 collection.findOne({_id: oid}).then(result => {
                     if (result) {
-                        chat.emit('groupInfo', JSON.stringify(result));
+                        chat.emit('groupInfo', result);
                     } else {
                         console.log("No document matches the provided query.");
                     }
@@ -273,12 +287,19 @@ module.exports = {
                     userSessions[userIndex].groupId = null
                 }
 
+                // If user is already in a channel, leave it
+                if (userSessions[userIndex].channelId != null) {
+                    socket.leave(userSessions[userIndex].channelId)
+                    userSessions[userIndex].channelId = null
+                }
+
                 socket.join(groupId);
 
                 // Update their session with the groupId
                 userSessions[userIndex].groupId = groupId;
 
-                chat.in(groupId).emit('joinedGroup');
+                // Tell them they've joined
+                socket.emit('joinedGroup');
             })
 
             // Stop listening to a group
@@ -292,9 +313,10 @@ module.exports = {
                 }
             })
 
+            // Return the channel list for the user
             socket.on('channelList', ({groupId, user}) => {
                 getChannelList(groupId, user, (channelList) => {
-                    chat.emit('channelList', JSON.stringify(channelList));
+                    socket.emit('channelList', channelList);
                 })
             })
 
@@ -317,7 +339,7 @@ module.exports = {
                     userSessions[userIndex].channelId = channelId;
                 }
 
-                chat.in(channelId).emit('joinedChannel');
+                socket.emit('joinedChannel');
             })
 
             // Stop listening to a channel
@@ -336,16 +358,17 @@ module.exports = {
             */
 
             // User has requested to add a new channel
-            socket.on('createChannel', (channel) => {
+            socket.on('createChannel', ({groupId, name, userId}) => {
+                console.log(userId)
                 const collection = db.collection('channels')
                 channelDoc = {
-                    groupId: new ObjectId(channel.groupId),
-                    name: channel.name,
-                    members: []
+                    groupId: new ObjectId(groupId),
+                    name: name,
+                    members: [new ObjectId(userId)]
                 }
                 collection.insertOne(channelDoc).then(() => {
                     // Tell everyone in the group to update their channel list
-                    chat.to(channel.groupId).emit('refreshChannelList', channel.groupId);
+                    chat.to(groupId).emit('refreshChannelList', groupId);
                 }).catch(err => console.error(`Failed to insert document: ${err}`));
             })
 
@@ -403,7 +426,7 @@ module.exports = {
 
                 collection.findOne(query).then(channelInfo => { 
                     if (channelInfo) {
-                        chat.to(channelId).emit('channelInfo', JSON.stringify(channelInfo));
+                        chat.to(channelId).emit('channelInfo', channelInfo);
                     } else {
                         console.log("No document matches the provided query.");
                     }
@@ -421,14 +444,14 @@ module.exports = {
 
                 collection.find(query).sort({"createdAt": -1}).limit(50).toArray().then(channelHistory => {
                     channelHistory.reverse()
-                    socket.emit('channelHistory', JSON.stringify(channelHistory));
+                    socket.emit('channelHistory', channelHistory);
                 }).catch(err => console.error(`Failed to find channelHistory document: ${err}`))
             })
 
             // Get the list of members in a group
             socket.on('groupMembers', (groupId) => {
                 getGroupMembers(groupId, (memberList) => {
-                    socket.emit('groupMembers', JSON.stringify(memberList))
+                    socket.emit('groupMembers', memberList)
                 })
             })
 
@@ -443,10 +466,16 @@ module.exports = {
                         var oid = new ObjectId(user._id)
                         var gOid = new ObjectId(data.groupId)
                         // Add the user to the member list
-                        groupCollection.updateOne({_id: gOid}, {$push: {members: oid}}).then(() => {
-                            // Update their member list
+                        groupCollection.updateOne({_id: gOid}, {$addToSet: {members: oid}}).then(() => {
+                            // Update the requester's member list
                             getGroupMembers(data.groupId, (memberList) => {
-                                socket.emit('groupMembers', JSON.stringify(memberList))
+                                socket.emit('groupMembers', memberList)
+
+                                // Tell the person added to refresh their list
+                                var session = userSessions.find((session) => session.userId == user._id)
+                                if (session) {
+                                    chat.in(session.socketId).emit('refreshGroupList')
+                                }
                             })
                         })
                     }
@@ -454,16 +483,62 @@ module.exports = {
             })
 
             // Remove a member from a group
-            socket.on('removeGroupMember', (data) => {
-                const collection = db.collection('groups')
-                var uOid = new ObjectId(data.userId)
-                var gOid = new ObjectId(data.groupId)
+            socket.on('removeGroupMember', ({groupId, userId}) => {
+                const collection = db.collection('groups');
+                var gOid = new ObjectId(groupId);
+                var uOid = new ObjectId(userId);
 
                 // Remove the user from the member list
                 collection.updateOne({_id: gOid}, {$pull: {members: uOid}}).then(() => {
-                    // Update their member list
-                    getGroupMembers(data.groupId, (memberList) => {
-                        socket.emit('groupMembers', JSON.stringify(memberList))
+                    // Update the requester's member list
+                    getGroupMembers(groupId, (memberList) => {
+                        socket.emit('groupMembers', memberList)
+
+                        // Tell the person removed to refresh their list
+                        var session = userSessions.find((session) => session.userId == userId)
+                        if (session) {
+                            chat.in(session.socketId).emit('refreshGroupList')
+                        }
+                    })
+                })
+            })
+
+            socket.on('addGroupAssistant', ({groupId, userId}) => {
+                const collection = db.collection('groups');
+                var gOid = new ObjectId(groupId);
+                var uOid = new ObjectId(userId);
+
+                // Add the user to the assistant list
+                collection.updateOne({_id: gOid}, {$addToSet: {assistants: uOid}}).then(() => {
+                    // Update the requester's member list
+                    getGroupMembers(groupId, (memberList) => {
+                        socket.emit('groupMembers', memberList)
+
+                        // Tell the person added to refresh their list
+                        var session = userSessions.find((session) => session.userId == userId)
+                        if (session) {
+                            chat.in(session.socketId).emit('refreshGroupList')
+                        }
+                    })
+                })
+            })
+
+            socket.on('removeGroupAssistant', ({groupId, userId}) => {
+                const collection = db.collection('groups');
+                var gOid = new ObjectId(groupId);
+                var uOid = new ObjectId(userId);
+
+                // Remove the user from the assistant list
+                collection.updateOne({_id: gOid}, {$pull: {assistants: uOid}}).then(() => {
+                    // Update the requester's member list
+                    getGroupMembers(groupId, (memberList) => {
+                        socket.emit('groupMembers', memberList)
+
+                        // Tell the person removed to refresh their list
+                        var session = userSessions.find((session) => session.userId == userId)
+                        if (session) {
+                            chat.in(session.socketId).emit('refreshGroupList')
+                        }
                     })
                 })
             })
@@ -471,34 +546,37 @@ module.exports = {
             // Return the members of a channel
             socket.on('channelMembers', (channelId) => {
                 getChannelMembers(channelId, (memberList) => {
-                    socket.emit('channelMembers', JSON.stringify(memberList))
+                    socket.emit('channelMembers', memberList)
                 })
             }) 
 
             // Return the members of a group that are able to be added to a channel
             socket.on('availableChannelMembers', (channelId) => {
                 getAvailableChannelMembers(channelId, (memberList) => {
-                    socket.emit('availableChannelMembers', JSON.stringify(memberList))
+                    socket.emit('availableChannelMembers', memberList)
                 })
             }) 
 
             // Add a member to a channel
-            socket.on('addChannelMember', ({channelId, userId}) => {
+            socket.on('addChannelMember', ({groupId, channelId, userId}) => {
                 const collection = db.collection('channels')
                 var cOid = new ObjectId(channelId)
                 var uOid = new ObjectId(userId)
 
                 // Add the user to the channel member list
-                collection.updateOne({_id: cOid}, {$push: {members: uOid}}).then(() => {
+                collection.updateOne({_id: cOid}, {$addToSet: {members: uOid}}).then(() => {
                     // Update their channel member list
                     getChannelMembers(channelId, (memberList) => {
-                        socket.emit('channelMembers', JSON.stringify(memberList))
+                        socket.emit('channelMembers', memberList)
                     })
+                    
+                    // Tell the group to update their channel lists
+                    chat.in(groupId).emit('refreshChannelList', groupId)
                 })
             })
 
             // Remove a member from a channel
-            socket.on('removeChannelMember', ({channelId, userId}) => {
+            socket.on('removeChannelMember', ({groupId, channelId, userId}) => {
                 const collection = db.collection('channels')
                 var cOid = new ObjectId(channelId)
                 var uOid = new ObjectId(userId)
@@ -507,8 +585,11 @@ module.exports = {
                 collection.updateOne({_id: cOid}, {$pull: {members: uOid}}).then(() => {
                     // Update their channel member list
                     getChannelMembers(channelId, (memberList) => {
-                        socket.emit('channelMembers', JSON.stringify(memberList))
+                        socket.emit('channelMembers', memberList)
                     })
+
+                    // Tell the group to update their channel lists
+                    chat.in(groupId).emit('refreshChannelList', groupId)
                 })
             })
 
@@ -538,7 +619,7 @@ module.exports = {
                             "offlineMembers": [] // Add this later
                         }
 
-                        chat.to(location.channelId).emit('memberList', JSON.stringify(memberList));
+                        chat.to(location.channelId).emit('memberList', memberList);
                     } else {
                         console.log("No document matches the provided query.");
                     }

@@ -1,21 +1,21 @@
 <div class="row min-vh-100">
     <!-- Channel List -->
-    <div class="col-md-2" style="background-color: #2B2B2B;">
+    <div class="channel-list" style="background-color: #2B2B2B;">
         <div class="d-flex justify-content-between text-white mb-2 border-bottom border-light">
             <div class="d-flex align-items-center"><b>{{group?.name}}</b></div>
-            <button *ngIf="userService.role! < 3" class="btn my-2 text-white" (click)="updateGroup()"><i class="bi-gear-fill"></i></button>
+            <button *ngIf="canEditGroup" class="btn my-2 text-white" (click)="updateGroup()"><i class="bi-gear-fill"></i></button>
         </div>
         <div *ngFor="let channel of channels" class="btn-group channel" [ngClass]="{'channel-active': channel._id == activeChannelId}">
             <button type="button" class="btn channel-text" (click)="navigateToChannel(channel._id)">{{channel.name}}</button>
-            <div *ngIf="userService.role! < 3" class="channel-options">
+            <div *ngIf="canEditChannel" class="channel-options">
                 <button type="button" class="btn text-white" (click)="updateChannel(channel._id)"><i class="bi-gear-fill"></i></button>
             </div>
         </div>
-        <div *ngIf="userService.role! < 3" class="btn channel d-block text-white" (click)="open(addChannelModal)"><i class="bi-plus"></i></div>
+        <div *ngIf="canEditChannel" class="btn channel d-block text-white" (click)="open(addChannelModal)"><i class="bi-plus"></i></div>
     </div>
 
     <!-- Channel -->
-    <div class="col-md-10 d-flex flex-column" style="background-color: #3B3B3B;">
+    <div class="col d-flex flex-column" style="background-color: #3B3B3B;">
         <div class="flex-fill d-flex">
             <div class="flex-fill">
                 <router-outlet></router-outlet>
@@ -85,7 +85,14 @@
         <label class="form-label">Members</label>
         <div *ngFor="let member of groupMembers">
             {{member.name}}
+            <button class="btn btn-primary" (click)="addGroupAssistant(member._id)"><i class="bi bi-shield-fill-plus"></i></button>
             <button class="btn btn-danger" (click)="removeGroupMember(member._id)"><i class="bi bi-person-dash-fill"></i></button>
+        </div>
+
+        <label class="form-label">Assistants</label>
+        <div *ngFor="let member of groupAssistants">
+            {{member.name}}
+            <button class="btn btn-danger" (click)="removeGroupAssistant(member._id)"><i class="bi bi-shield-fill-minus"></i></button>
         </div>
     
         <label for="memberNameInput" class="form-label">Add Member</label>

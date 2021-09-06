@@ -1,21 +1,38 @@
 <div class="overflow-hidden">
     <div class="row min-vh-100">
         <!-- Group List -->
-        <div class="col-md-1" style="background-color: #1B1B1B;">
+        <div class="group-list" style="background-color: #1B1B1B;">
             <div class="mx-auto" style="width: 50px">
                 <ul class="nav nav-pills nav-fill flex-column">
                     <li *ngFor="let group of groups" class="nav-item">
                         <a class="nav-link" (click)="navigateToGroup(group._id)">{{group.name}}</a>
                     </li>
                 </ul>
-                <button class="btn btn-outline-info group-btn" (click)="groupHub()">Hub</button>
-                <button *ngIf="userService.role! < 2" class="btn btn-outline-info group-btn" (click)="controlPanel()">Control Panel</button>
-                <button class="btn btn-danger group-btn" (click)="logout()">Logout</button>
+                <button class="btn btn-outline-info" (click)="openAddGroupModal()"><i class="bi bi-plus"></i></button>
+                <button *ngIf="userService.role! < 2" class="btn btn-outline-info" (click)="controlPanel()">Control Panel</button>
+                <button class="btn btn-danger" (click)="logout()">Logout</button>
             </div>
         </div>
         <!-- Group -->
-        <div class="col-md-11">
+        <div class="col">
             <router-outlet></router-outlet>
         </div>
     </div>
 </div>
+
+<ng-template #addGroupModal let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title">Create Group</h5>
+        <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <form>
+            <label for="groupNameInput" class="form-label">Group Name</label>
+            <input #groupNameInput id="groupNameInput" class="form-control" type="text" name="groupNameInput" placeholder="New Group">
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-link" (click)="modal.close()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="createGroup(groupNameInput.value); modal.close()">Create Group</button>
+    </div>
+</ng-template>

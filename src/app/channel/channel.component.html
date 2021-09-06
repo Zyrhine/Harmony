@@ -1,8 +1,8 @@
 <div class="row text-white">
     <h6 class="text-white py-3">{{channel?.name}}</h6>
 </div>
-<div class="text-white d-flex flex-horizontal">
-    <div class="d-flex flex-fill flex-column">
+<div class="row text-white">
+    <div class="col">
         <!-- Chat -->
         <div class="flex-fill">
             <ul class="list-unstyled text-white">
@@ -22,7 +22,7 @@
             </form>
         </div>
     </div>
-    <div class="">
+    <div class="member-list">
         <!-- Member List -->
         <p><b>Online - {{members?.onlineMembers.length}}</b></p>
         <ul class="list-unstyled">

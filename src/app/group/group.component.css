@@ -1,3 +1,7 @@
+.channel-list {
+    width: 12rem;
+}
+
 .channel {
     border-radius: 4px;
     display: flex;
