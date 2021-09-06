@@ -35,67 +35,99 @@ export class SocketService {
   }
 
   /*
+  *   USER ADMINISTRATION
+  */
+
+  reqUserList() {
+    console.log("Requesting user list...");
+    this.socket.emit('userList');
+  }
+
+  getUserList(next: any) {
+    this.socket.on('userList', (userList: any) => {
+      console.log("Received user list.");
+      next(JSON.parse(userList));
+    });
+  }
+
+  createUser(newUser: any) {
+    this.socket.emit('createUser', newUser)
+  }
+
+  updateUser(user: any) {
+    this.socket.emit('updateUser', user)
+  }
+
+  deleteUser(userId: string) {
+    this.socket.emit('deleteUser', userId)
+  }
+
+  promoteUser(userId: string) {
+    this.socket.emit('promoteUser', userId)
+  }
+
+  /*
   *   GROUPS
   */
 
   reqGroupIndex() {
-    console.log("Requesting group index...")
-    this.socket.emit('groupIndex')
+    console.log("Requesting group index...");
+    this.socket.emit('groupIndex');
   }
 
   getGroupIndex(next: any) {
-    this.socket.on('groupIndex', (res: any) => {
-      console.log("Received group index.")
-      next(JSON.parse(res))
-    })
+    this.socket.on('groupIndex', (groupList: any) => {
+      console.log("Received group index.");
+      next(JSON.parse(groupList));
+    });
   }
 
   reqGroupList() {
-    console.log("Requesting group list...")
-    this.socket.emit('groupList')
+    console.log("Requesting group list...");
+    this.socket.emit('groupList');
   }
 
   getGroupList(next: any) {
     this.socket.on('groupList', (res: any) => {
-      console.log("Received group list.")
-      next(JSON.parse(res))
-    })
+      console.log("Received group list.");
+      next(JSON.parse(res));
+    });
   }
 
   reqGroupInfo(groupId: string) {
-    console.log("Requesting group info...")
-    this.socket.emit('groupInfo', groupId)
+    console.log("Requesting group info...");
+    this.socket.emit('groupInfo', groupId);
   }
 
   getGroupInfo(next: any) {
     this.socket.on('groupInfo', (res: any) => {
-      console.log("Received group info.")
-      next(JSON.parse(res))
-    })
+      console.log("Received group info.");
+      next(JSON.parse(res));
+    });
   }
 
   createGroup(name: string) {
-    this.socket.emit('createGroup', name)
+    this.socket.emit('createGroup', name);
   }
 
   updateGroup(groupData: any) {
-    this.socket.emit('updateGroup', groupData)
+    this.socket.emit('updateGroup', groupData);
   }
 
   deleteGroup(groupId: string) {
-    this.socket.emit('deleteGroup', groupId)
+    this.socket.emit('deleteGroup', groupId);
   }
 
   joinGroup(groupId: string): void {
-    console.log("Joining group...")
-    this.socket.emit('joinGroup', groupId)
+    console.log("Joining group...");
+    this.socket.emit('joinGroup', groupId);
   }
 
   joinedGroup(next: any): void {
     this.socket.on('joinedGroup', (res: any) => {
-      console.log("Joined group.")
-      next(res)
-    })
+      console.log("Joined group.");
+      next(res);
+    });
   }
 
 

@@ -12,6 +12,7 @@ import { ChannelComponent } from './channel/channel.component';
 import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
 import { HttpClientModule } from '@angular/common/http';
+import { ControlPanelComponent } from './control-panel/control-panel.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,8 @@ import { HttpClientModule } from '@angular/common/http';
     GroupComponent,
     ChannelComponent,
     LoginComponent,
-    HomeComponent
+    HomeComponent,
+    ControlPanelComponent
   ],
   imports: [
     BrowserModule,

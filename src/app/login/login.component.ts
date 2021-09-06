@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http'
+import { UserService } from '../services/user.service';
 
 const BACKEND_URL = "http://localhost:3000"
 const httpOptions = {
@@ -17,7 +18,7 @@ export class LoginComponent implements OnInit {
   password: string = ""
   error: string = ""
 
-  constructor(private router: Router, private httpClient: HttpClient) { }
+  constructor(private router: Router, private httpClient: HttpClient, private userService: UserService) { }
 
   ngOnInit(): void {
   }
@@ -36,6 +37,7 @@ export class LoginComponent implements OnInit {
     this.httpClient.post(BACKEND_URL + '/api/auth', user, httpOptions).subscribe((data: any) => {
       if (data.ok) {
         sessionStorage.setItem("user", JSON.stringify(data.user))
+        this.userService.login();
         this.router.navigateByUrl('/home');
       } else {
         this.error = "You have entered an invalid email or password"

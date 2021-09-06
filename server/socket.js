@@ -19,7 +19,7 @@ module.exports = {
             // Find the groups the user is in and send it back
             const collection = db.collection('groups');
             var oid = new ObjectId(userId);
-            collection.find({members: {$elemMatch: {userId: oid}}}).toArray().then(result => {
+            collection.find({members: [oid]}).toArray().then(result => {
                 if (result) {
                     next(result)
                 } else {
@@ -54,6 +54,72 @@ module.exports = {
             console.log(`${socket.userName} : ${socket.id} connected on port ${PORT}`)
 
             /*
+            *   CONTROL PANEL
+            */
+
+            // Get all users
+            socket.on('userList', () => {
+                const collection = db.collection('users');
+                collection.find().toArray().then(userList => {
+                    socket.emit('userList', JSON.stringify(userList));
+                }).catch(err => console.error(`Failed to get user list: ${err}`));
+            })
+
+            // Create a new user of role member
+            socket.on('createUser', (user) => {
+                const collection = db.collection('users');
+                userDoc = {
+                    email: user.email,
+                    password: user.password,
+                    name: user.name,
+                    role: 3
+                }
+
+                collection.insertOne(userDoc).then(() => {
+                    // Update their user list
+                    collection.find().toArray().then(userList => {
+                        socket.emit('userList', JSON.stringify(userList));
+                    }).catch(err => console.error(`Failed to get user list: ${err}`));
+                }).catch(err => console.error(`Failed to insert new user: ${err}`));
+            })
+
+            // Update the details for an existing user
+            socket.on('updateUser', (user) => {
+                const collection = db.collection('users');
+                var oid = new ObjectId(user._id)
+                collection.updateOne({_id: oid}, {$set: {email: user.email, password: user.password, name: user.name}}).then(() => {
+                    // Update their user list
+                    collection.find().toArray().then(userList => {
+                        socket.emit('userList', JSON.stringify(userList));
+                    }).catch(err => console.error(`Failed to get user list: ${err}`));
+                }).catch(err => console.error(`Failed to update user: ${err}`));
+            })
+
+            // Delete a user
+            socket.on('deleteUser', (userId) => {
+                const collection = db.collection('users');
+                var oid = new ObjectId(userId)
+                collection.deleteOne({_id: oid}).then(() => {
+                    // Update their user list
+                    collection.find().toArray().then(userList => {
+                        socket.emit('userList', JSON.stringify(userList));
+                    }).catch(err => console.error(`Failed to get user list: ${err}`));
+                }).catch(err => console.error(`Failed to delete user: ${err}`));
+            })
+
+            // Promote a user
+            socket.on('promoteUser', (userId) => {
+                const collection = db.collection('users');
+                var oid = new ObjectId(userId)
+                collection.updateOne({_id: oid, role: {$gt : 0}}, {$inc: {role: -1} }).then(() => {
+                    // Update their user list
+                    collection.find().toArray().then(userList => {
+                        socket.emit('userList', JSON.stringify(userList));
+                    }).catch(err => console.error(`Failed to get user list: ${err}`));
+                }).catch(err => console.error(`Failed to update user: ${err}`));
+            })
+
+            /*
             *   GROUP INDEX
             */
 
@@ -71,11 +137,8 @@ module.exports = {
 
             // Send back a list of groups the user is in
             socket.on('groupList', () => {
-                // Find the groups the user is in and send it back
-                const collection = db.collection('groups');
-                var oid = new ObjectId(socket.userId);
-                collection.find({members: {$elemMatch: {userId: oid}}}).toArray((err, data) => {
-                    socket.emit('groupList', JSON.stringify(data));
+                getGroupList(socket.userId, (groupList) => {
+                    socket.emit('groupList', JSON.stringify(groupList));
                 })
             })
 
@@ -83,13 +146,13 @@ module.exports = {
             *   GROUP
             */
 
+            // Create group with the user
             socket.on('createGroup', (name) => {
                 const collection = db.collection('groups')
                 var userOid = new ObjectId(socket.userId)
                 groupDoc = {
                     name: name,
-                    members: [{userId: userOid, roles: []}],
-                    roles: []
+                    members: [userOid]
                 }
 
                 collection.insertOne(groupDoc).then(() => {
@@ -237,7 +300,7 @@ module.exports = {
                 channelDoc = {
                     groupId: new ObjectId(channel.groupId),
                     name: channel.name,
-                    roles: []
+                    members: []
                 }
                 collection.insertOne(channelDoc).then(() => {
                     // Update the channel list for everyone in the group

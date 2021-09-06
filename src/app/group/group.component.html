@@ -3,16 +3,17 @@
     <div class="col-md-2" style="background-color: #2B2B2B;">
         <div class="d-flex justify-content-between text-white mb-2 border-bottom border-light">
             <div class="d-flex align-items-center"><b>{{group?.name}}</b></div>
-            <button class="btn my-2 text-white" (click)="updateGroup()"><i class="bi-gear-fill"></i></button>
+            <button *ngIf="userService.role! < 3" class="btn my-2 text-white" (click)="updateGroup()"><i class="bi-gear-fill"></i></button>
         </div>
         <div *ngFor="let channel of channels" class="btn-group channel" [ngClass]="{'channel-active': channel._id == activeChannelId}">
             <button type="button" class="btn channel-text" (click)="navigateToChannel(channel._id)">{{channel.name}}</button>
-            <div class="channel-options">
+            <div *ngIf="userService.role! < 3" class="channel-options">
                 <button type="button" class="btn text-white" (click)="updateChannel(channel._id)"><i class="bi-gear-fill"></i></button>
             </div>
         </div>
-        <div class="btn channel d-block text-white" (click)="open(addChannelModal)"><i class="bi-plus"></i></div>
+        <div *ngIf="userService.role! < 3" class="btn channel d-block text-white" (click)="open(addChannelModal)"><i class="bi-plus"></i></div>
     </div>
+
     <!-- Channel -->
     <div class="col-md-10 d-flex flex-column" style="background-color: #3B3B3B;">
         <div class="flex-fill d-flex">

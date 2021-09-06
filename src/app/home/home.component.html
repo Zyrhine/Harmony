@@ -8,8 +8,9 @@
                         <a class="nav-link" (click)="navigateToGroup(group._id)">{{group.name}}</a>
                     </li>
                 </ul>
-                <button class="btn btn-outline-primary group-btn" (click)="groupHub()">Hub</button>
-                <button class="btn btn-outline-primary group-btn" (click)="logout()">Logout</button>
+                <button class="btn btn-outline-info group-btn" (click)="groupHub()">Hub</button>
+                <button *ngIf="userService.role! < 2" class="btn btn-outline-info group-btn" (click)="controlPanel()">Control Panel</button>
+                <button class="btn btn-danger group-btn" (click)="logout()">Logout</button>
             </div>
         </div>
         <!-- Group -->

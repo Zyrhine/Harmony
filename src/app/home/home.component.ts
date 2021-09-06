@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SocketService } from '../services/socket.service';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-home',
@@ -11,7 +12,7 @@ export class HomeComponent implements OnInit {
   groups = null
   activeGroup: string | null = null
 
-  constructor(private router: Router, private route: ActivatedRoute, private socketService: SocketService) {
+  constructor(private router: Router, private route: ActivatedRoute, private socketService: SocketService, public userService: UserService) {
 
   }
 
@@ -32,6 +33,10 @@ export class HomeComponent implements OnInit {
 
   groupHub() {
     this.router.navigate(['./group-index' ], { relativeTo: this.route });
+  }
+
+  controlPanel() {
+    this.router.navigate(['./control-panel' ], { relativeTo: this.route });
   }
 
   logout() {

@@ -1,0 +1,51 @@
+<h1>Control Panel</h1>
+<h2>Users</h2>
+<div *ngFor="let user of users">
+    {{user.name}}
+    <button *ngIf="user.role > 0" class="btn btn-info" (click)="promoteUser(user._id)">Promote</button>
+    <button class="btn btn-info" (click)="openEditUserModal(user._id)">Edit User</button>
+    <button class="btn btn-danger" (click)="deleteUser(user._id)">Delete User</button>
+</div>
+<button class="btn btn-primary" (click)="openNewUserModal()">New User</button>
+
+<ng-template #newUserModal let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title">New User</h5>
+        <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <form>
+            <label for="emailInput" class="form-label">Email</label>
+            <input id="emailInput" class="form-control" type="text" [(ngModel)]="userModel.email" name="emailInput" placeholder="email@example.com">
+            <label for="passwordInput" class="form-label">Password</label>
+            <input id="passwordInput" class="form-control" type="text" [(ngModel)]="userModel.password" name="passwordInput">
+            <label for="nameInput" class="form-label">Display Name</label>
+            <input id="nameInput" class="form-control" type="text" [(ngModel)]="userModel.name" name="nameInput">
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-link" (click)="modal.close()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="createUser(); modal.close()">Create User</button>
+    </div>
+</ng-template>
+
+<ng-template #editUserModal let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title">Edit User</h5>
+        <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <form>
+            <label for="emailInput" class="form-label">Email</label>
+            <input id="emailInput" class="form-control" type="text" [(ngModel)]="userModel.email" name="emailInput" placeholder="email@example.com">
+            <label for="passwordInput" class="form-label">Password</label>
+            <input id="passwordInput" class="form-control" type="text" [(ngModel)]="userModel.password" name="passwordInput">
+            <label for="nameInput" class="form-label">Display Name</label>
+            <input id="nameInput" class="form-control" type="text" [(ngModel)]="userModel.name" name="nameInput">
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-link" (click)="modal.close()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="updateUser(); modal.close()">Save</button>
+    </div>
+</ng-template>

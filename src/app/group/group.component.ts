@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SocketService } from '../services/socket.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'group',
@@ -21,7 +22,7 @@ export class GroupComponent implements OnInit {
   channelModel: any = null
   groupModel: any = null;
 
-  constructor(private router: Router, private route: ActivatedRoute, private socketService: SocketService, private modalService: NgbModal) { }
+  constructor(private router: Router, private route: ActivatedRoute, private socketService: SocketService, private modalService: NgbModal, public userService: UserService) { }
 
   ngOnInit(): void {
     this.socketService.getChannelList((channelList: any) => {
