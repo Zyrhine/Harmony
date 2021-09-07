@@ -1,4 +1,22 @@
-.member-list {
+#channel {
+    height: 100vh;
+    color: white;
+    background-color: #2b2b2b;
+}
+
+#channel-heading {
+    border-bottom: 1px solid;
+    border-color: #121212;
+}
+
+#member-list {
     width: 12rem;
-    background-color: #2B2B2B;
+    background-color: #222;
+    padding: 1rem;
+}
+
+#message-box {
+    background-color: #515151;
+    border: none;
+    color: white;
 }

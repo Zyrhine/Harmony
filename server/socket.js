@@ -114,7 +114,7 @@ module.exports = {
             // Get all users
             socket.on('userList', () => {
                 const collection = db.collection('users');
-                collection.find().toArray().then(userList => {
+                collection.find().sort({role: 1}).toArray().then(userList => {
                     socket.emit('userList', userList);
                 }).catch(err => console.error(`Failed to get user list: ${err}`));
             })

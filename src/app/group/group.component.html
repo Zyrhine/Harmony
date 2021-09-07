@@ -1,33 +1,31 @@
-<div class="row min-vh-100">
+<div id="group" class="d-flex">
     <!-- Channel List -->
-    <div class="channel-list" style="background-color: #2B2B2B;">
-        <div class="d-flex justify-content-between text-white mb-2 border-bottom border-light">
+    <div id="group-panel">
+        <div id="group-heading" class="d-flex justify-content-between">
             <div class="d-flex align-items-center"><b>{{group?.name}}</b></div>
-            <button *ngIf="canEditGroup" class="btn my-2 text-white" (click)="updateGroup()"><i class="bi-gear-fill"></i></button>
+            <button *ngIf="canEditGroup" class="btn text-white p-0" (click)="updateGroup()"><i class="bi-gear-fill"></i></button>
         </div>
-        <div *ngFor="let channel of channels" class="btn-group channel" [ngClass]="{'channel-active': channel._id == activeChannelId}">
-            <button type="button" class="btn channel-text" (click)="navigateToChannel(channel._id)">{{channel.name}}</button>
-            <div *ngIf="canEditChannel" class="channel-options">
-                <button type="button" class="btn text-white" (click)="updateChannel(channel._id)"><i class="bi-gear-fill"></i></button>
+        <div id="channel-list">
+            <div *ngFor="let channel of channels" class="btn-group channel" [ngClass]="{'channel-active': channel._id == activeChannelId}">
+                <button type="button" class="btn channel-text" (click)="navigateToChannel(channel._id)">{{channel.name}}</button>
+                <div *ngIf="canEditChannel" class="channel-options">
+                    <button type="button" class="btn text-white" (click)="updateChannel(channel._id)"><i class="bi-gear-fill"></i></button>
+                </div>
             </div>
+            <div *ngIf="canEditChannel" class="btn channel d-block text-white" (click)="open(addChannelModal)"><i class="bi-plus"></i></div>
         </div>
-        <div *ngIf="canEditChannel" class="btn channel d-block text-white" (click)="open(addChannelModal)"><i class="bi-plus"></i></div>
     </div>
 
     <!-- Channel -->
-    <div class="col d-flex flex-column" style="background-color: #3B3B3B;">
-        <div class="flex-fill d-flex">
-            <div class="flex-fill">
-                <router-outlet></router-outlet>
-            </div>
-        </div>
+    <div class="flex-fill">
+        <router-outlet></router-outlet>
     </div>
 </div>
 
 <ng-template #addChannelModal let-modal>
     <div class="modal-header">
         <h5 class="modal-title">Create Channel</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" (click)="modal.dismiss()"></button>
+        <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
     </div>
     <div class="modal-body">
         <form>
@@ -44,25 +42,30 @@
 <ng-template #editChannelModal let-modal>
     <div class="modal-header">
         <h5 class="modal-title">Edit Channel</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" (click)="modal.dismiss()"></button>
+        <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
     </div>
     <div class="modal-body">
-        <form>
+        <div class="mb-3">
             <label for="channelNameInput" class="form-label">Channel Name</label>
             <input id="channelNameInput" class="form-control" type="text" [(ngModel)]="channelModel.name" name="channelNameInput" placeholder="Channel Name">
-        </form>
+        </div>
 
-        <label class="form-label">Members</label>
-        <div *ngFor="let member of channelMembers">
-            {{member.name}}
-            <button class="btn btn-danger" (click)="removeChannelMember(member._id)"><i class="bi bi-person-dash-fill"></i></button>
+        <div class="mb-3">
+            <label class="form-label">Members</label>
+            <div *ngFor="let member of channelMembers" class="mb-2">
+                {{member.name}}
+                <button class="btn btn-danger" (click)="removeChannelMember(member._id)"><i class="bi bi-person-dash-fill"></i></button>
+            </div>
         </div>
-    
-        <label for="memberNameInput" class="form-label">Add Member</label>
-        <div *ngFor="let member of availableChannelMembers">
-            {{member.name}}
-            <button class="btn btn-primary" (click)="addChannelMember(member._id)"><i class="bi bi-person-plus-fill"></i></button>
+
+        <div class="mb-3">
+            <label for="memberNameInput" class="form-label">Add Member</label>
+            <div *ngFor="let member of availableChannelMembers" class="mb-2">
+                {{member.name}}
+                <button class="btn btn-primary" (click)="addChannelMember(member._id)"><i class="bi bi-person-plus-fill"></i></button>
+            </div>
         </div>
+        
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-danger" (click)="deleteChannel(); modal.close()">Delete Channel</button>
@@ -74,31 +77,42 @@
 <ng-template #editGroupModal let-modal>
     <div class="modal-header">
         <h5 class="modal-title">Edit Group</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" (click)="modal.dismiss()"></button>
+        <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
     </div>
     <div class="modal-body">
-        <form>
+        <div class="mb-3">
             <label for="groupNameInput" class="form-label">Group Name</label>
             <input id="groupNameInput" class="form-control" type="text" [(ngModel)]="groupModel.name" name="groupNameInput" placeholder="Group Name">
-        </form>
-
-        <label class="form-label">Members</label>
-        <div *ngFor="let member of groupMembers">
-            {{member.name}}
-            <button class="btn btn-primary" (click)="addGroupAssistant(member._id)"><i class="bi bi-shield-fill-plus"></i></button>
-            <button class="btn btn-danger" (click)="removeGroupMember(member._id)"><i class="bi bi-person-dash-fill"></i></button>
         </div>
 
-        <label class="form-label">Assistants</label>
-        <div *ngFor="let member of groupAssistants">
-            {{member.name}}
-            <button class="btn btn-danger" (click)="removeGroupAssistant(member._id)"><i class="bi bi-shield-fill-minus"></i></button>
+        <div class="mb-3">
+            <label class="form-label">Members</label>
+            <div *ngFor="let member of groupMembers" class="mb-2">
+                {{member.name}}
+                <button class="btn btn-primary me-2" (click)="addGroupAssistant(member._id)"><i class="bi bi-shield-fill-plus"></i></button>
+                <button class="btn btn-danger" (click)="removeGroupMember(member._id)"><i class="bi bi-person-dash-fill"></i></button>
+            </div>
         </div>
-    
-        <label for="memberNameInput" class="form-label">Add Member</label>
-        <input #memberNameInput id="memberNameInput" class="form-control" type="email" name="memberNameInput" placeholder="email">
-        <button class="btn btn-primary" (click)="addGroupMember(memberNameInput.value)">Add</button>
 
+        <div class="mb-3">
+            <label class="form-label">Assistants</label>
+            <div *ngFor="let member of groupAssistants">
+                {{member.name}}
+                <button class="btn btn-danger" (click)="removeGroupAssistant(member._id)"><i class="bi bi-shield-fill-minus"></i></button>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="memberNameInput" class="form-label">Add Member</label>
+            <div class="row g-2">
+                <div class="col-auto">
+                    <input #memberNameInput id="memberNameInput" class="form-control" type="email" name="memberNameInput" placeholder="email">
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-primary" (click)="addGroupMember(memberNameInput.value)">Add</button>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-danger" (click)="deleteGroup(); modal.close()">Delete Group</button>

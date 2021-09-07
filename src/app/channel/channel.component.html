@@ -1,39 +1,39 @@
-<div class="row text-white">
-    <h6 class="text-white py-3">{{channel?.name}}</h6>
-</div>
-<div class="row text-white">
-    <div class="col">
-        <!-- Chat -->
-        <div class="flex-fill">
-            <ul class="list-unstyled text-white">
-                <li *ngFor="let message of messages">{{message.name}}: {{message.message}}</li>
+<div id="channel" class="d-flex flex-column">
+    <div id="channel-heading">
+        <h6 class="m-3"><i class="bi bi-chat-left-dots-fill me-2"></i> {{channel?.name}}</h6>
+    </div>
+    <div id="channel-body" class="d-flex flex-fill">
+        <!-- Chat Window-->
+        <div class="d-flex flex-column flex-fill mx-3">
+            <!-- Chat Log -->
+            <div class="flex-grow-1">
+                <ul class="list-unstyled text-white">
+                    <li *ngFor="let message of messages">{{message.name}}: {{message.message}}</li>
+                </ul>
+            </div>
+            
+            <!-- Message Box -->
+            <div class="py-3">
+                <form class="d-flex">
+                    <div class="flex-fill me-2">
+                        <input id="message-box" class="form-control" id="message-box" type="text" name="message" autocomplete="off" [(ngModel)]="curMessage"/>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary border-0" (click)="sendMessage()">Send</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="member-list">
+            <!-- Member List -->
+            <p><b>Online - {{members?.onlineMembers.length}}</b></p>
+            <ul class="list-unstyled">
+                <li *ngFor="let member of members?.onlineMembers">{{member}}</li>
             </ul>
         </div>
-        <div class="py-3">
-            <form>
-                <div class="row g-2">
-                    <div class="col-sm-10">
-                        <input class="form-control" id="messageBox" type="text" name="message" autocomplete="off" [(ngModel)]="curMessage"/>
-                    </div>
-                    <div class="col-sm-2">
-                        <button class="btn btn-primary" (click)="sendMessage()">Send</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-    <div class="member-list">
-        <!-- Member List -->
-        <p><b>Online - {{members?.onlineMembers.length}}</b></p>
-        <ul class="list-unstyled">
-            <li *ngFor="let member of members?.onlineMembers">{{member}}</li>
-        </ul>
-        <p><b>Offline - {{members?.offlineMembers.length}}</b></p>
-        <ul class="list-unstyled">
-            <li *ngFor="let member of members?.offlineMembers">{{member}}</li>
-        </ul>
     </div>
 </div>
+
 
 
 

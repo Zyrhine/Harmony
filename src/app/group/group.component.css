@@ -1,5 +1,24 @@
-.channel-list {
-    width: 12rem;
+#group {
+    height: 100vh
+}
+
+#group-panel {
+    width: 14rem;
+    background: #222222;
+    color: white;
+}
+
+#group-heading {
+    border-bottom: 1px solid;
+    border-color: #515151;
+    margin-left: 1rem;
+    margin-right: 1rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+#channel-list {
+    padding: 0.5rem;
 }
 
 .channel {
@@ -7,6 +26,7 @@
     display: flex;
     flex-direction: row;
     font-size: 1rem;
+    margin-bottom: 0.25rem;
 }
 
 .channel:hover {

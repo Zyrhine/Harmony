@@ -1,22 +1,28 @@
-<div class="row justify-content-md-center pt-3">
-    <div class="col-md-6">
-        <h1>Login</h1>
-        <div class="alert alert-warning" role="alert" *ngIf="error != ''">
-            {{error}}
-        </div>
-        <div class="card">
-            <div class="card-body">
-                <form>
-                    <div class="mb-3">
-                        <label for="emailInput" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="emailInput" [(ngModel)]="email" name="email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="passwordInput" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="passwordInput" [(ngModel)]="password" name="password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" (click)="login()">Login</button>
-                </form>
+<div class="background">
+    <div class="row my-5">
+        <h1 class="display-1 text-white text-center">Harmony</h1>
+    </div>
+    <div class="row justify-content-center pt-3">
+        <div class="col-auto">
+            <div *ngIf="error != ''" class="alert alert-warning" role="alert">
+                {{error}}
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="emailInput" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="emailInput" [(ngModel)]="email" name="email" placeholder="your@email.com" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="passwordInput" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="passwordInput" [(ngModel)]="password" name="password" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success" (click)="login()">Login</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

@@ -1,3 +1,27 @@
+.home {
+    background-image: radial-gradient(#7c7c7c 1%, transparent 5%);
+    background-color: #202020;
+    background-size: 25px 25px;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
 .group-list {
+    background-color: #121212;
     width: 6rem;
+    height: 100vh;
+}
+
+.group-btn {
+    width: 4rem;
+    height: 4rem;
+    background-color: #3b3b3b;
+    border-radius: 8px;
+    color: white;
+    margin: 0.25rem;
+}
+
+.group-btn:hover {
+    background-color: #515151;
 }

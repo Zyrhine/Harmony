@@ -1,22 +1,18 @@
-<div class="overflow-hidden">
-    <div class="row min-vh-100">
-        <!-- Group List -->
-        <div class="group-list" style="background-color: #1B1B1B;">
-            <div class="mx-auto" style="width: 50px">
-                <ul class="nav nav-pills nav-fill flex-column">
-                    <li *ngFor="let group of groups" class="nav-item">
-                        <a class="nav-link" (click)="navigateToGroup(group._id)">{{group.name}}</a>
-                    </li>
-                </ul>
-                <button class="btn btn-outline-info" (click)="openAddGroupModal()"><i class="bi bi-plus"></i></button>
-                <button *ngIf="userService.role! < 2" class="btn btn-outline-info" (click)="controlPanel()">Control Panel</button>
-                <button class="btn btn-danger" (click)="logout()">Logout</button>
-            </div>
+<div class="home d-flex">
+    <!-- Group List -->
+    <div class="group-list d-flex align-items-start flex-column">
+        <div id="groups" class="d-flex flex-column mx-auto mb-auto m-2">
+            <button *ngFor="let group of groups" class="btn group-btn" (click)="navigateToGroup(group._id)">{{group.name}}</button>
+            <button *ngIf="userService.role! < 2" class="btn group-btn bg-success rounded-circle" (click)="openAddGroupModal()"><i class="bi bi-plus fs-2"></i></button>
         </div>
-        <!-- Group -->
-        <div class="col">
-            <router-outlet></router-outlet>
+        <div id="other" class="d-flex flex-column mx-auto m-2">
+            <button *ngIf="userService.role! < 2" class="btn text-white" (click)="controlPanel()"><i class="bi bi-wrench fs-4"></i></button>
+            <button class="btn btn-danger" (click)="logout()">Logout</button>
         </div>
+    </div>
+    <!-- Group -->
+    <div class="flex-fill overflow-hidden">
+        <router-outlet></router-outlet>
     </div>
 </div>
 
