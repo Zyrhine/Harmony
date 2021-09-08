@@ -132,19 +132,13 @@ export class SocketService {
     this.socket.emit('groupIndex');
   }
 
-  
-
   reqGroupList() {
-    this.socket.emit('groupList');
+    this.socket.emit('groupList', this.user);
   }
-
-  
 
   reqGroupInfo(groupId: string) {
     this.socket.emit('groupInfo', groupId);
   }
-
-  
 
   createGroup(name: string) {
     this.socket.emit('createGroup', name);

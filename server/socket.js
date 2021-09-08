@@ -2,6 +2,7 @@ const { ObjectId } = require("mongodb")
 
 module.exports = {
     connect: function(db, io, PORT) {
+        // Get a list of channels depending on the user role
         function getChannelList(groupId, user, next) {
             const collection = db.collection('channels');
             var oid = new ObjectId(groupId);
@@ -21,11 +22,16 @@ module.exports = {
             .catch(err => console.error(`Failed to get channel list: ${err}`))
         }
 
-        function getGroupList(userId, next) {
-            // Find the groups the user is in and send it back
+        // Get a list of groups that the user is in
+        function getGroupList(user, next) {
             const collection = db.collection('groups');
-            var oid = new ObjectId(userId);
-            collection.find({members: oid}).toArray().then(result => {
+            if (user.role > 1) {
+                query = {members: new ObjectId(user._id)}
+            } else {
+                query = {}
+            }
+            
+            collection.find(query).toArray().then(result => {
                 if (result) {
                     next(result)
                 } else {
@@ -49,6 +55,7 @@ module.exports = {
             .catch(err => console.error(`Failed to get group info: ${err}`));
         }
 
+        // Get the members of a group with their user info
         function getGroupMembers(groupId, next) {
             const collection = db.collection('groups')
             const agg = [
@@ -77,6 +84,7 @@ module.exports = {
             })
         }
 
+        // Get the members of a channel
         function getChannelMembers(channelId, next) {
             const collection = db.collection('channels')
             const agg = [
@@ -183,8 +191,8 @@ module.exports = {
             *   GROUP INDEX
             */
 
+            // Get all groups
             socket.on('groupIndex', () => {
-                // Get all available groups
                 const collection = db.collection('groups');
                 collection.find().toArray().then(groupList => {
                     socket.emit('groupIndex', groupList);
@@ -196,8 +204,8 @@ module.exports = {
             */
 
             // Send back a list of groups the user is in
-            socket.on('groupList', () => {
-                getGroupList(socket.userId, (groupList) => {
+            socket.on('groupList', (user) => {
+                getGroupList(user, (groupList) => {
                     socket.emit('groupList', groupList);
                 })
             })
@@ -224,6 +232,7 @@ module.exports = {
                 }).catch(err => console.error(`Failed to insert document: ${err}`));
             })
 
+            // Modify a group with a new name
             socket.on('updateGroup', (group) => {
                 const collection = db.collection('groups')
                 var oid = new ObjectId(group._id);
@@ -236,6 +245,7 @@ module.exports = {
                 }).catch(err => console.error(`Failed to update document: ${err}`));
             })
 
+            // Delete a group
             socket.on('deleteGroup', (groupId) => {
                 // Delete all group messages
                 const messagesCollection = db.collection('messages')
@@ -259,7 +269,7 @@ module.exports = {
                 }).catch(err => console.error(`Failed to delete messages: ${err}`));
             })
 
-
+            // Get the information for a group
             socket.on('groupInfo', (groupId) => {
                 const collection = db.collection('groups');
                 var oid = new ObjectId(groupId);
@@ -273,7 +283,7 @@ module.exports = {
                 .catch(err => console.error(`Failed to get group info: ${err}`));
             })
 
-            // Start listening to group
+            // Join the room for a group
             socket.on('joinGroup', (groupId) => {
                 // Get the user session
                 var userIndex = userSessions.findIndex((user) => user.socketId == socket.id);
@@ -302,7 +312,7 @@ module.exports = {
                 socket.emit('joinedGroup');
             })
 
-            // Stop listening to a group
+            // Leave the room for a group
             socket.on('leaveGroup', (groupId) => {
                 socket.leave(groupId);
 
@@ -320,14 +330,27 @@ module.exports = {
                 })
             })
 
-            // Start listening to channel
+            // Join the room for a channel
             socket.on('joinChannel', (channelId) => {
                 // If user is already in a room, leave it
                 var userIndex = userSessions.findIndex((user) => user.socketId == socket.id);
                 if (userIndex != -1) {
-                    if (userSessions[userIndex].channelId != null) {
-                        socket.leave(userSessions[userIndex].channelId)
+                    var oldChannelId = userSessions[userIndex].channelId;
+                    if (oldChannelId != null) {
+                        socket.leave(oldChannelId)
                         userSessions[userIndex].channelId = null
+
+                        // Update leave for other people in channel
+                        // Get online users
+                        var usersInChannel = userSessions.filter((user) => user.channelId == oldChannelId);
+                        // Limit to neccessary information
+                        var namesInChannel = pluck(usersInChannel, "name");
+                        var memberList = {
+                            "onlineMembers": namesInChannel,
+                            "offlineMembers": [] // Add this later
+                        }
+
+                        chat.to(oldChannelId).emit('memberList', memberList);
                     }
                 }
 
@@ -342,7 +365,7 @@ module.exports = {
                 socket.emit('joinedChannel');
             })
 
-            // Stop listening to a channel
+            // Leave the room for a channel
             socket.on('leaveChannel', (channelId) => {
                 socket.leave(channelId);
 
@@ -503,6 +526,7 @@ module.exports = {
                 })
             })
 
+            // Add an assistant for a group
             socket.on('addGroupAssistant', ({groupId, userId}) => {
                 const collection = db.collection('groups');
                 var gOid = new ObjectId(groupId);
@@ -523,6 +547,7 @@ module.exports = {
                 })
             })
 
+            // Remove an assistant for a group
             socket.on('removeGroupAssistant', ({groupId, userId}) => {
                 const collection = db.collection('groups');
                 var gOid = new ObjectId(groupId);
