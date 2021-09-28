@@ -217,7 +217,7 @@ export class SocketService {
   }
   
   sendMessage(groupId: string, channelId: string, message: string): void {
-    this.socket.emit('message', {'groupId': groupId, 'channelId': channelId, 'name': this.user.name, 'message': message})
+    this.socket.emit('message', {'groupId': groupId, 'channelId': channelId, 'userId': this.user._id, 'message': message})
   }
 
 

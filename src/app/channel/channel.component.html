@@ -8,7 +8,15 @@
             <!-- Chat Log -->
             <div class="flex-grow-1">
                 <ul class="list-unstyled text-white">
-                    <li *ngFor="let message of messages">{{message.name}}: {{message.message}}</li>
+                    <li *ngFor="let message of messages; let i = index;" class="mb-1">
+                        <div *ngIf="message.userId != messages[i - 1]?.userId; else elseBlock">
+                            <img class="rounded-circle" src='http://localhost:3000/avatar/{{message.imageUrl}}' width="25px" height="25px">
+                            {{message.name}}: {{message.message}}
+                        </div>
+                        <ng-template #elseBlock>
+                            {{message.message}}
+                        </ng-template>
+                    </li>
                 </ul>
             </div>
             
@@ -26,9 +34,12 @@
         </div>
         <div id="member-list">
             <!-- Member List -->
-            <p><b>Online - {{members?.onlineMembers.length}}</b></p>
+            <p><b>Online - {{onlineMembers?.length}}</b></p>
             <ul class="list-unstyled">
-                <li *ngFor="let member of members?.onlineMembers">{{member}}</li>
+                <li *ngFor="let member of onlineMembers">
+                    <img class="rounded-circle" src='http://localhost:3000/avatar/{{member.imageUrl}}' width="25px" height="25px">
+                    {{member.name}}
+                </li>
             </ul>
         </div>
     </div>

@@ -11,6 +11,7 @@ import { SocketService } from '../services/socket.service';
 export class ChannelComponent implements OnInit {
   channel: any | null = null
   members: any | null = null
+  onlineMembers: any | null = []
   groupId: string | null = null
   channelId: string | null = null
   curMessage: string = ""
@@ -34,18 +35,60 @@ export class ChannelComponent implements OnInit {
       this.channel = channelInfo
     })
 
-    this.memberListSub = this.socketService.onMemberList().subscribe((memberList: string[]) => {
+    this.memberListSub = this.socketService.onMemberList().subscribe((memberList: any) => {
       console.log("Got member list.")
-      this.members = memberList
+      this.members = memberList.members
+
+      // Populate onlineMembers 
+      this.onlineMembers = [];
+      memberList.onlineIds.forEach((id: any) => {
+        var user = this.getUserData(id);
+        if (user) {
+          this.onlineMembers.push(user);
+        } else {
+          user = {
+            name: 'Unknown User',
+            imageUrl: "default.png"
+          }
+          this.onlineMembers.push(user);
+        }
+      })
+
+      // Populate message history with new user data
+      this.messages.forEach((message: any) => {
+        // Get the user from the member list
+        var user = this.getUserData(message.userId)
+
+        // Add user and image URL onto it
+        if (user) {
+          message.imageUrl = user.imageUrl;
+          message.name = user.name;
+        } else {
+          message.imageUrl = "default.png";
+          message.name = "[Unknown User]";
+        }
+      });
     })
 
-    this.channelHistorySub = this.socketService.onChannelHistory().subscribe((channelHistory: string[]) => {
+    this.channelHistorySub = this.socketService.onChannelHistory().subscribe((channelHistory: any) => {
       console.log("Got history.")
       this.messages = channelHistory
     })
 
     this.messageSub = this.socketService.onMessage().subscribe((messageData: any) => {
       console.log("Got message.")
+      // Get the user from the member list
+      var user = this.getUserData(messageData.userId)
+
+      // Add user and image URL onto it
+      if (user) {
+        messageData.imageUrl = user.imageUrl;
+        messageData.name = user.name;
+      } else {
+        messageData.imageUrl = "default.png";
+        messageData.name = "[Unknown User]";
+      }
+      
       this.messages.push(messageData)
     })
 
@@ -65,6 +108,10 @@ export class ChannelComponent implements OnInit {
       this.socketService.reqChannelHistory(this.groupId!, this.channelId!)
       this.isReady = true
     })
+  }
+
+  getUserData(userId: string) {
+    return this.members.find((user: any) => user._id == userId)
   }
 
   sendMessage() {

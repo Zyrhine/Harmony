@@ -134,6 +134,7 @@ module.exports = {
                     email: user.email,
                     password: user.password,
                     name: user.name,
+                    imageUrl: "default.png",
                     role: 2
                 }
 
@@ -432,8 +433,8 @@ module.exports = {
                     groupId: new ObjectId(messageData.groupId),
                     channelId: new ObjectId(messageData.channelId),
                     userId: new ObjectId(socket.userId),
-                    name: messageData.name,
                     message: messageData.message,
+                    attachments: [],
                     createdAt: new Date()
                 }
 
@@ -620,31 +621,35 @@ module.exports = {
 
             // Send the list of online and offline members for a channel
             socket.on('memberList', (location) => {
-                // Get group for all possible channel members
-                const channelCollection = db.collection('channels')
-                const groupCollection = db.collection('groups')
+                const collection = db.collection('channels')
                 var cOid = new ObjectId(location.channelId)
                 var gOid = new ObjectId(location.groupId)
                 const channelQuery = {_id: cOid}
                 const groupQuery = {_id: gOid}
 
                 // Get the channel for the required roles
-                channelCollection.findOne(channelQuery).then(result => { 
-                    if(result) {
+                collection.findOne(channelQuery).then(channel => { 
+                    if(channel) {
                         // TODO: Get offline users based on possible users in group's members
-
+                        console.log(channel.members);
                         // Get online users
                         var usersInChannel = userSessions.filter((user) => user.channelId == location.channelId);
 
                         // Limit to neccessary information
-                        var namesInChannel = pluck(usersInChannel, "name");
+                        var idsInChannel = pluck(usersInChannel, "userId");
+                        console.log(idsInChannel)
 
-                        var memberList = {
-                            "onlineMembers": namesInChannel,
-                            "offlineMembers": [] // Add this later
-                        }
+                        // Get their data from the db
+                        db.collection('users').find({_id: {$in: channel.members}}).project({name: 1, imageUrl: 1}).toArray().then(users => {
+                            var memberList = {
+                                "onlineIds": idsInChannel,
+                                "members": users
+                            }
+    
+                            chat.to(location.channelId).emit('memberList', memberList);
+                        });
 
-                        chat.to(location.channelId).emit('memberList', memberList);
+                        
                     } else {
                         console.log("No document matches the provided query.");
                     }
@@ -680,4 +685,8 @@ class Session {
 
 function pluck(array, key) {
     return array.map(function(item) { return item[key]; });
+}
+
+function pluckObjId(array, key) {
+    return array.map(function(item) { return new ObjectId(item[key]); });
 }
