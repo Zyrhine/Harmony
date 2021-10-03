@@ -434,7 +434,7 @@ module.exports = {
                     channelId: new ObjectId(messageData.channelId),
                     userId: new ObjectId(socket.userId),
                     message: messageData.message,
-                    attachments: [],
+                    attachments: messageData.attachments,
                     createdAt: new Date()
                 }
 

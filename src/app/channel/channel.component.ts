@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SocketService } from '../services/socket.service';
+import { UserService } from '../services/user.service';
+import { UploadService } from '../upload.service';
 
 @Component({
   selector: 'channel',
@@ -27,7 +29,7 @@ export class ChannelComponent implements OnInit {
   parentRouteSub: Subscription | null | undefined = null
   routeSub: Subscription | null | undefined = null
 
-  constructor(private socketService: SocketService, private route: ActivatedRoute) { }
+  constructor(private socketService: SocketService, private route: ActivatedRoute, private uploadService: UploadService, private userService: UserService) { }
 
   ngOnInit(): void {
     this.channelInfoSub = this.socketService.onChannelInfo().subscribe((channelInfo: any) => {
@@ -115,10 +117,26 @@ export class ChannelComponent implements OnInit {
   }
 
   sendMessage() {
+    if (this.selectedFile != null) {
+      const fd = new FormData();
+      fd.append('image', this.selectedFile!, this.selectedFile!.name);
+      fd.append('userId', this.userService.id!)
+      this.uploadService.uploadAttachment(fd).then((res: any) => {
+        this.socketService.sendMessage(this.groupId!, this.channelId!, this.curMessage, [res.data.filename])
+        this.curMessage = ""
+      })
+    }
+
     if (this.curMessage != "") {
-      this.socketService.sendMessage(this.groupId!, this.channelId!, this.curMessage)
+      this.socketService.sendMessage(this.groupId!, this.channelId!, this.curMessage, [])
       this.curMessage = ""
     }
+  }
+
+  selectedFile: any = null;
+
+  onFileSelected(e: any) {
+    this.selectedFile = e.target.files[0];
   }
 
   ngOnDestroy() {

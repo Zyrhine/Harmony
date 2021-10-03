@@ -216,8 +216,8 @@ export class SocketService {
     this.socket.emit('channelHistory', location)
   }
   
-  sendMessage(groupId: string, channelId: string, message: string): void {
-    this.socket.emit('message', {'groupId': groupId, 'channelId': channelId, 'userId': this.user._id, 'message': message})
+  sendMessage(groupId: string, channelId: string, message: string, attachments: string[]): void {
+    this.socket.emit('message', {'groupId': groupId, 'channelId': channelId, 'userId': this.user._id, 'message': message, 'attachments': attachments})
   }
 
 

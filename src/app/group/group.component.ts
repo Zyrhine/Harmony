@@ -4,6 +4,7 @@ import { SocketService } from '../services/socket.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { UserService } from '../services/user.service';
 import { Subscription } from 'rxjs';
+import { UploadService } from '../upload.service';
 
 @Component({
   selector: 'group',
@@ -40,7 +41,7 @@ export class GroupComponent implements OnInit, OnDestroy {
   canEditChannel: boolean = false
   canEditGroup: boolean = false
 
-  constructor(private router: Router, private route: ActivatedRoute, private socketService: SocketService, private modalService: NgbModal, public userService: UserService) { }
+  constructor(private router: Router, private route: ActivatedRoute, private socketService: SocketService, private modalService: NgbModal, public userService: UserService, public uploadService: UploadService) { }
 
   ngOnInit(): void {
     this.groupMembersSub = this.socketService.onGroupMembers().subscribe((memberList: any) => {
@@ -191,6 +192,22 @@ export class GroupComponent implements OnInit, OnDestroy {
   deleteChannel() {
     this.socketService.deleteChannel(this.channelModel.groupId, this.channelModel._id);
   }
+
+  selectedFile: any = null;
+
+  onFileSelected(e: any) {
+    this.selectedFile = e.target.files[0];
+  }
+
+  uploadAvatar() {
+    const fd = new FormData();
+    fd.append('image', this.selectedFile!, this.selectedFile!.name);
+    fd.append('userId', this.userService.id!)
+    this.uploadService.uploadAvatar(fd).then((res: any) => {
+      console.log("Done upload");
+    })
+  }
+
 
   ngOnDestroy() {
     this.channelListSub?.unsubscribe();

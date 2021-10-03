@@ -13,6 +13,7 @@ const server = require('./listen.js')
 const path = require('path');
 const MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
+const { formidable } = require('formidable');
 
 app.use(express.static(__dirname + '/public'));
 app.use(express.urlencoded({extended: true}));
@@ -29,6 +30,8 @@ MongoClient.connect(url, {useNewUrlParser: true, useUnifiedTopology: true}, func
         const db = client.db(dbName)
 
         require('./routes/auth')(db, app, path);
+        require('./routes/uploadAvatar')(db, app, path);
+        require('./routes/uploadAttachment')(db, app, path);
 
         sockets.connect(db, io, PORT)
         server.listen(http, PORT)

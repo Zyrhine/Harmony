@@ -14,6 +14,10 @@
             </div>
             <div *ngIf="canEditChannel" class="btn channel d-block text-white" (click)="open(addChannelModal)"><i class="bi-plus"></i></div>
         </div>
+        <div>
+            <img class="rounded-circle" src="{{userService.imageUrl}}" width="25px" height="25px" (click)="open(avatarModal)">
+            {{userService.name}}
+        </div>
     </div>
 
     <!-- Channel -->
@@ -118,5 +122,26 @@
         <button type="button" class="btn btn-danger" (click)="deleteGroup(); modal.close()">Delete Group</button>
         <button type="button" class="btn btn-link" (click)="modal.close()">Cancel</button>
         <button type="button" class="btn btn-primary" (click)="saveGroup(); modal.close()">Save</button>
+    </div>
+</ng-template>
+
+<ng-template #avatarModal let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title">Avatar</h5>
+        <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <img class="rounded-circle" src="{{userService.imageUrl}}" width="50px" height="50px">
+
+        <form>
+            <div class="mb-3">
+                <label for="groupNameInput" class="form-label">Avatar Upload</label>
+                <input type="file" class="form-control" (change)="onFileSelected($event)" name="avatarUpload" id="avatarUpload"/>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-link" (click)="modal.close()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="uploadAvatar(); modal.close()">Upload</button>
     </div>
 </ng-template>

@@ -16,6 +16,7 @@
                         <ng-template #elseBlock>
                             {{message.message}}
                         </ng-template>
+                        <img class="attachment" *ngFor="let attachmentUrl of message.attachments" src="http://localhost:3000/attachment/{{attachmentUrl}}" />
                     </li>
                 </ul>
             </div>
@@ -23,8 +24,10 @@
             <!-- Message Box -->
             <div class="py-3">
                 <form class="d-flex">
-                    <div class="flex-fill me-2">
+                    <div class="input-group flex-fill me-2">
                         <input id="message-box" class="form-control" id="message-box" type="text" name="message" autocomplete="off" [(ngModel)]="curMessage"/>
+                        <span class="input-group-text rounded-end" (click)="file.click()"><i class="bi bi-file-earmark-plus-fill"></i><span *ngIf="selectedFile != null">&nbsp;Attached</span></span>
+                        <input #file id="attachmentUpload" name="attachmentUpload" type="file" class="form-control d-none" (change)="onFileSelected($event)" accept="image/*"/>
                     </div>
                     <div>
                         <button class="btn btn-secondary border-0" (click)="sendMessage()">Send</button>
