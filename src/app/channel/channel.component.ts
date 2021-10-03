@@ -67,7 +67,7 @@ export class ChannelComponent implements OnInit {
           message.name = user.name;
         } else {
           message.imageUrl = "default.png";
-          message.name = "[Unknown User]";
+          message.name = "[Removed User]";
         }
       });
     })
@@ -123,6 +123,7 @@ export class ChannelComponent implements OnInit {
       fd.append('userId', this.userService.id!)
       this.uploadService.uploadAttachment(fd).then((res: any) => {
         this.socketService.sendMessage(this.groupId!, this.channelId!, this.curMessage, [res.data.filename])
+        this.selectedFile = null;
         this.curMessage = ""
       })
     }

@@ -25,7 +25,14 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.socketService.initSocket();
     this.socketService.reqGroupList();
     this.groupListSub = this.socketService.onGroupList().subscribe((groupList: any) => {
+
+      groupList.forEach((group: any) => {
+        console.log(typeof(group.name));
+        group.name = group.name.split(' ').map((i: any) => i.charAt(0)).join('').toUpperCase()
+      })
+
       this.groups = groupList;
+
       this.router.navigate(['./' ], { relativeTo: this.route });
     })
   }

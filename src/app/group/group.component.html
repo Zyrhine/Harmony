@@ -1,11 +1,11 @@
 <div id="group" class="d-flex">
     <!-- Channel List -->
-    <div id="group-panel">
+    <div id="group-panel" class="d-flex flex-column">
         <div id="group-heading" class="d-flex justify-content-between">
             <div class="d-flex align-items-center"><b>{{group?.name}}</b></div>
             <button *ngIf="canEditGroup" class="btn text-white p-0" (click)="updateGroup()"><i class="bi-gear-fill"></i></button>
         </div>
-        <div id="channel-list">
+        <div id="channel-list" class="flex-fill">
             <div *ngFor="let channel of channels" class="btn-group channel" [ngClass]="{'channel-active': channel._id == activeChannelId}">
                 <button type="button" class="btn channel-text" (click)="navigateToChannel(channel._id)">{{channel.name}}</button>
                 <div *ngIf="canEditChannel" class="channel-options">
@@ -14,7 +14,7 @@
             </div>
             <div *ngIf="canEditChannel" class="btn channel d-block text-white" (click)="open(addChannelModal)"><i class="bi-plus"></i></div>
         </div>
-        <div>
+        <div class="m-2">
             <img class="rounded-circle" src="{{userService.imageUrl}}" width="25px" height="25px" (click)="open(avatarModal)">
             {{userService.name}}
         </div>

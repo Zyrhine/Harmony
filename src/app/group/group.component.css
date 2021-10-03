@@ -19,6 +19,8 @@
 
 #channel-list {
     padding: 0.5rem;
+    border-bottom: 1px solid;
+    border-color: #515151;
 }
 
 .channel {

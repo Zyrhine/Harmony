@@ -16,7 +16,7 @@
                         <ng-template #elseBlock>
                             {{message.message}}
                         </ng-template>
-                        <img class="attachment" *ngFor="let attachmentUrl of message.attachments" src="http://localhost:3000/attachment/{{attachmentUrl}}" />
+                        <img class="attachment rounded" *ngFor="let attachmentUrl of message.attachments" src="http://localhost:3000/attachment/{{attachmentUrl}}" />
                     </li>
                 </ul>
             </div>
