@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SocketService } from '../services/socket.service';
 import { UserService } from '../services/user.service';
-import { UploadService } from '../upload.service';
+import { UploadService } from '../services/upload.service';
 
 @Component({
   selector: 'channel',

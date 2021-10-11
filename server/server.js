@@ -38,5 +38,7 @@ MongoClient.connect(url, {useNewUrlParser: true, useUnifiedTopology: true}, func
     }
 })
 
+// For tests
+module.exports = app;
 
 

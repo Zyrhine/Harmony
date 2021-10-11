@@ -4,7 +4,7 @@ import { SocketService } from '../services/socket.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { UserService } from '../services/user.service';
 import { Subscription } from 'rxjs';
-import { UploadService } from '../upload.service';
+import { UploadService } from '../services/upload.service';
 
 @Component({
   selector: 'group',

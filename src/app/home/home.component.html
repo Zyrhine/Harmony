@@ -3,11 +3,11 @@
     <div class="group-list d-flex align-items-start flex-column">
         <div id="groups" class="d-flex flex-column mx-auto mb-auto m-2">
             <button *ngFor="let group of groups" class="btn group-btn" (click)="navigateToGroup(group._id)">{{group.name}}</button>
-            <button *ngIf="userService.role! < 2" class="btn group-btn bg-success rounded-circle" (click)="openAddGroupModal()"><i class="bi bi-plus fs-2"></i></button>
+            <button id="createGroup" *ngIf="userService.role! < 2" class="btn group-btn bg-success rounded-circle" (click)="openAddGroupModal()"><i class="bi bi-plus fs-2"></i></button>
         </div>
         <div id="other" class="d-flex flex-column mx-auto m-2">
-            <button *ngIf="userService.role! < 2" class="btn text-white" (click)="controlPanel()"><i class="bi bi-wrench fs-4"></i></button>
-            <button class="btn btn-danger" (click)="logout()">Logout</button>
+            <button id="controlPanel" *ngIf="userService.role! < 2" class="btn text-white" (click)="controlPanel()"><i class="bi bi-wrench fs-4"></i></button>
+            <button id="logout" class="btn btn-danger" (click)="logout()">Logout</button>
         </div>
     </div>
     <!-- Group -->
@@ -29,6 +29,6 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-link" (click)="modal.close()">Cancel</button>
-        <button type="button" class="btn btn-primary" (click)="createGroup(groupNameInput.value); modal.close()">Create Group</button>
+        <button id="createGroupBtn" type="button" class="btn btn-primary" (click)="createGroup(groupNameInput.value); modal.close()">Create Group</button>
     </div>
 </ng-template>
