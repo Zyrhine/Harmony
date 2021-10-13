@@ -27,7 +27,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.groupListSub = this.socketService.onGroupList().subscribe((groupList: any) => {
 
       groupList.forEach((group: any) => {
-        console.log(typeof(group.name));
         group.name = group.name.split(' ').map((i: any) => i.charAt(0)).join('').toUpperCase()
       })
 

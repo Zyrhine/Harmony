@@ -30,6 +30,8 @@ export class GroupComponent implements OnInit, OnDestroy {
   channelMembers: any = null;
   availableChannelMembers: any = null;
 
+  selectedFile: any = null;
+
   // Subscriptions
   channelListSub: Subscription | null = null
   groupInfoSub: Subscription | null = null
@@ -193,8 +195,6 @@ export class GroupComponent implements OnInit, OnDestroy {
     this.socketService.deleteChannel(this.channelModel.groupId, this.channelModel._id);
   }
 
-  selectedFile: any = null;
-
   onFileSelected(e: any) {
     this.selectedFile = e.target.files[0];
   }
@@ -205,9 +205,15 @@ export class GroupComponent implements OnInit, OnDestroy {
     fd.append('userId', this.userService.id!)
     this.uploadService.uploadAvatar(fd).then((res: any) => {
       console.log("Done upload");
+    
+      console.log("Known channel Id: " + this.socketService.channelId);
+      // Update everyone in a channel if the user was in a channel
+      if (this.socketService.channelId != null) {
+        console.log("requesting");
+        this.socketService.reqChannelMemberList(this.socketService.channelId);
+      } 
     })
   }
-
 
   ngOnDestroy() {
     this.channelListSub?.unsubscribe();

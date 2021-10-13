@@ -33,13 +33,13 @@ export class ChannelComponent implements OnInit {
 
   ngOnInit(): void {
     this.channelInfoSub = this.socketService.onChannelInfo().subscribe((channelInfo: any) => {
-      console.log("Got channel info.")
-      this.channel = channelInfo
+      console.log("Got channel info.");
+      this.channel = channelInfo;
     })
 
-    this.memberListSub = this.socketService.onMemberList().subscribe((memberList: any) => {
-      console.log("Got member list.")
-      this.members = memberList.members
+    this.memberListSub = this.socketService.onChannelMemberList().subscribe((memberList: any) => {
+      console.log("Got member list.");
+      this.members = memberList.members;
 
       // Populate onlineMembers 
       this.onlineMembers = [];
@@ -59,7 +59,7 @@ export class ChannelComponent implements OnInit {
       // Populate message history with new user data
       this.messages.forEach((message: any) => {
         // Get the user from the member list
-        var user = this.getUserData(message.userId)
+        var user = this.getUserData(message.userId);
 
         // Add user and image URL onto it
         if (user) {
@@ -73,14 +73,14 @@ export class ChannelComponent implements OnInit {
     })
 
     this.channelHistorySub = this.socketService.onChannelHistory().subscribe((channelHistory: any) => {
-      console.log("Got history.")
-      this.messages = channelHistory
+      console.log("Got history.");
+      this.messages = channelHistory;
     })
 
     this.messageSub = this.socketService.onMessage().subscribe((messageData: any) => {
       console.log("Got message.")
       // Get the user from the member list
-      var user = this.getUserData(messageData.userId)
+      var user = this.getUserData(messageData.userId);
 
       // Add user and image URL onto it
       if (user) {
@@ -91,46 +91,48 @@ export class ChannelComponent implements OnInit {
         messageData.name = "[Unknown User]";
       }
       
-      this.messages.push(messageData)
+      this.messages.push(messageData);
     })
 
     this.parentRouteSub = this.route.parent?.params.subscribe(params => {
-      this.groupId = params.groupId
+      this.groupId = params.groupId;
     })
 
     this.routeSub = this.route.params.subscribe(params => {
-      this.channelId = params.channelId
-      this.socketService.joinChannel(this.channelId!)
+      this.channelId = params.channelId;
+      this.socketService.joinChannel(this.channelId!);
     })
 
-    this.joinedChannelSub = this.socketService.onJoinedChannel().subscribe(() => {
+    this.joinedChannelSub = this.socketService.onJoinedChannel().subscribe((channelId: string) => {
       console.log("Joined channel.")
-      this.socketService.reqChannelInfo(this.channelId!)
-      this.socketService.reqMemberList(this.groupId!, this.channelId!)
-      this.socketService.reqChannelHistory(this.groupId!, this.channelId!)
-      this.isReady = true
+      this.socketService.channelId = channelId;
+      console.log("Socket Service: " + this.socketService.channelId)
+      this.socketService.reqChannelInfo(this.channelId!);
+      this.socketService.reqChannelMemberList(this.channelId!);
+      this.socketService.reqChannelHistory(this.groupId!, this.channelId!);
+      this.isReady = true;
     })
   }
 
   getUserData(userId: string) {
-    return this.members.find((user: any) => user._id == userId)
+    return this.members.find((user: any) => user._id == userId);
   }
 
   sendMessage() {
     if (this.selectedFile != null) {
       const fd = new FormData();
       fd.append('image', this.selectedFile!, this.selectedFile!.name);
-      fd.append('userId', this.userService.id!)
+      fd.append('userId', this.userService.id!);
       this.uploadService.uploadAttachment(fd).then((res: any) => {
-        this.socketService.sendMessage(this.groupId!, this.channelId!, this.curMessage, [res.data.filename])
+        this.socketService.sendMessage(this.groupId!, this.channelId!, this.curMessage, [res.data.filename]);
         this.selectedFile = null;
-        this.curMessage = ""
+        this.curMessage = "";
       })
     }
 
     if (this.curMessage != "") {
-      this.socketService.sendMessage(this.groupId!, this.channelId!, this.curMessage, [])
-      this.curMessage = ""
+      this.socketService.sendMessage(this.groupId!, this.channelId!, this.curMessage, []);
+      this.curMessage = "";
     }
   }
 

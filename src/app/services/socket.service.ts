@@ -10,6 +10,7 @@ const SERVER_URL = 'http://localhost:3000/chat';
 export class SocketService {
   private user: any
   private socket: any
+  public channelId: any
 
   constructor() { }
 
@@ -200,12 +201,8 @@ export class SocketService {
     this.socket.emit('channelInfo', channelId)
   }
 
-  reqMemberList(groupId: string, channelId: string): void {
-    var location = {
-      groupId: groupId,
-      channelId: channelId
-    }
-    this.socket.emit('memberList', location)
+  reqChannelMemberList(channelId: string): void {
+    this.socket.emit('channelMemberList', channelId)
   }
 
   reqChannelHistory(groupId: string, channelId: string) {
@@ -234,9 +231,9 @@ export class SocketService {
     })
   }
 
-  onMemberList(): Observable<any> {
+  onChannelMemberList(): Observable<any> {
     return new Observable(observer => {
-      this.socket.on('memberList', (memberList: any) => observer.next(memberList));
+      this.socket.on('channelMemberList', (channelMemberList: any) => observer.next(channelMemberList));
     })
   }
 
@@ -266,7 +263,7 @@ export class SocketService {
 
   onJoinedChannel(): Observable<any> {
     return new Observable(observer => {
-      this.socket.on('joinedChannel', () => observer.next());
+      this.socket.on('joinedChannel', (channelId: string) => observer.next(channelId));
     })
   }
 

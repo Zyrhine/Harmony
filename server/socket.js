@@ -41,6 +41,40 @@ module.exports = {
             .catch(err => console.error(`Failed to get group list: ${err}`))
         }
 
+        // Get a list of members of a channel with those that are online
+        function getChannelMemberList(channelId, next) {
+            const collection = db.collection('channels')
+            var cOid = new ObjectId(channelId)
+            const channelQuery = {_id: cOid}
+
+            // Get the channel for the required roles
+            collection.findOne(channelQuery).then(channel => { 
+                if(channel) {
+                    // TODO: Get offline users based on possible users in group's members
+                    console.log(channel.members);
+                    // Get online users
+                    var usersInChannel = userSessions.filter((user) => user.channelId == channelId);
+
+                    // Limit to neccessary information
+                    var idsInChannel = pluck(usersInChannel, "userId");
+                    console.log(idsInChannel)
+
+                    // Get their data from the db
+                    db.collection('users').find({_id: {$in: channel.members}}).project({name: 1, imageUrl: 1}).toArray().then(users => {
+                        var memberList = {
+                            "onlineIds": idsInChannel,
+                            "members": users
+                        }
+
+                        next(memberList);
+                    });
+                } else {
+                    console.log("No document matches the provided query.");
+                }
+            })
+            .catch(err => console.error(`Failed to get member list: ${err}`));
+        }
+
         // Get the document for a group
         function getGroupInfo(groupId, next) {
             const collection = db.collection('groups');
@@ -102,6 +136,13 @@ module.exports = {
                 } else {
                     console.log("No document matches the provided query.");
                 }
+            })
+        }
+
+        // Update the list of offline and online members for everyone in a channel
+        function updateChannelMembers(channelId) {
+            getChannelMemberList(channelId, (memberList) => {
+                chat.to(channelId).emit('channelMemberList', memberList);
             })
         }
 
@@ -341,17 +382,8 @@ module.exports = {
                         socket.leave(oldChannelId)
                         userSessions[userIndex].channelId = null
 
-                        // Update leave for other people in channel
-                        // Get online users
-                        var usersInChannel = userSessions.filter((user) => user.channelId == oldChannelId);
-                        // Limit to neccessary information
-                        var namesInChannel = pluck(usersInChannel, "name");
-                        var memberList = {
-                            "onlineMembers": namesInChannel,
-                            "offlineMembers": [] // Add this later
-                        }
-
-                        chat.to(oldChannelId).emit('memberList', memberList);
+                        // Update channel members for others in the channel
+                        updateChannelMembers(oldChannelId);
                     }
                 }
 
@@ -363,7 +395,7 @@ module.exports = {
                     userSessions[userIndex].channelId = channelId;
                 }
 
-                socket.emit('joinedChannel');
+                socket.emit('joinedChannel', channelId);
             })
 
             // Leave the room for a channel
@@ -375,6 +407,9 @@ module.exports = {
                 if (userIndex != -1) {
                     userSessions[userIndex].channelId = null;
                 }
+
+                // Update the userlist for others in the channel
+                updateChannelMembers(channelId);
             })
 
             /*
@@ -474,8 +509,8 @@ module.exports = {
 
             // Get the list of members in a group
             socket.on('groupMembers', (groupId) => {
-                getGroupMembers(groupId, (memberList) => {
-                    socket.emit('groupMembers', memberList)
+                getGroupMembers(groupId, (groupMembers) => {
+                    socket.emit('groupMembers', groupMembers)
                 })
             })
 
@@ -492,8 +527,8 @@ module.exports = {
                         // Add the user to the member list
                         groupCollection.updateOne({_id: gOid}, {$addToSet: {members: oid}}).then(() => {
                             // Update the requester's member list
-                            getGroupMembers(data.groupId, (memberList) => {
-                                socket.emit('groupMembers', memberList)
+                            getGroupMembers(data.groupId, (groupMembers) => {
+                                socket.emit('groupMembers', groupMembers)
 
                                 // Tell the person added to refresh their list
                                 var session = userSessions.find((session) => session.userId == user._id)
@@ -515,8 +550,8 @@ module.exports = {
                 // Remove the user from the member list
                 collection.updateOne({_id: gOid}, {$pull: {members: uOid}}).then(() => {
                     // Update the requester's member list
-                    getGroupMembers(groupId, (memberList) => {
-                        socket.emit('groupMembers', memberList)
+                    getGroupMembers(groupId, (groupMembers) => {
+                        socket.emit('groupMembers', groupMembers)
 
                         // Tell the person removed to refresh their list
                         var session = userSessions.find((session) => session.userId == userId)
@@ -536,8 +571,8 @@ module.exports = {
                 // Add the user to the assistant list
                 collection.updateOne({_id: gOid}, {$addToSet: {assistants: uOid}}).then(() => {
                     // Update the requester's member list
-                    getGroupMembers(groupId, (memberList) => {
-                        socket.emit('groupMembers', memberList)
+                    getGroupMembers(groupId, (groupMembers) => {
+                        socket.emit('groupMembers', groupMembers)
 
                         // Tell the person added to refresh their list
                         var session = userSessions.find((session) => session.userId == userId)
@@ -557,8 +592,8 @@ module.exports = {
                 // Remove the user from the assistant list
                 collection.updateOne({_id: gOid}, {$pull: {assistants: uOid}}).then(() => {
                     // Update the requester's member list
-                    getGroupMembers(groupId, (memberList) => {
-                        socket.emit('groupMembers', memberList)
+                    getGroupMembers(groupId, (groupMembers) => {
+                        socket.emit('groupMembers', groupMembers)
 
                         // Tell the person removed to refresh their list
                         var session = userSessions.find((session) => session.userId == userId)
@@ -571,15 +606,15 @@ module.exports = {
 
             // Return the members of a channel
             socket.on('channelMembers', (channelId) => {
-                getChannelMembers(channelId, (memberList) => {
-                    socket.emit('channelMembers', memberList)
+                getChannelMembers(channelId, (channelMembers) => {
+                    socket.emit('channelMembers', channelMembers)
                 })
             }) 
 
             // Return the members of a group that are able to be added to a channel
             socket.on('availableChannelMembers', (channelId) => {
-                getAvailableChannelMembers(channelId, (memberList) => {
-                    socket.emit('availableChannelMembers', memberList)
+                getAvailableChannelMembers(channelId, (availableMembers) => {
+                    socket.emit('availableChannelMembers', availableMembers)
                 })
             }) 
 
@@ -620,50 +655,25 @@ module.exports = {
             })
 
             // Send the list of online and offline members for a channel
-            socket.on('memberList', (location) => {
-                const collection = db.collection('channels')
-                var cOid = new ObjectId(location.channelId)
-                var gOid = new ObjectId(location.groupId)
-                const channelQuery = {_id: cOid}
-                const groupQuery = {_id: gOid}
-
-                // Get the channel for the required roles
-                collection.findOne(channelQuery).then(channel => { 
-                    if(channel) {
-                        // TODO: Get offline users based on possible users in group's members
-                        console.log(channel.members);
-                        // Get online users
-                        var usersInChannel = userSessions.filter((user) => user.channelId == location.channelId);
-
-                        // Limit to neccessary information
-                        var idsInChannel = pluck(usersInChannel, "userId");
-                        console.log(idsInChannel)
-
-                        // Get their data from the db
-                        db.collection('users').find({_id: {$in: channel.members}}).project({name: 1, imageUrl: 1}).toArray().then(users => {
-                            var memberList = {
-                                "onlineIds": idsInChannel,
-                                "members": users
-                            }
-    
-                            chat.to(location.channelId).emit('memberList', memberList);
-                        });
-
-                        
-                    } else {
-                        console.log("No document matches the provided query.");
-                    }
-                })
-                .catch(err => console.error(`Failed to get member list: ${err}`));
+            socket.on('channelMemberList', (channelId) => {
+                updateChannelMembers(channelId);
             })
 
             /*
             *   OTHER
             */
             socket.on('disconnect', () => {
-                // Remove their session
+                // Get their session
                 var userIndex = userSessions.findIndex((session) => session.socketId == socket.id)
                 if (userIndex != -1) {
+                    var user = userSessions[userIndex];
+
+                    // Update the channel they were in
+                    if (user.channelId != null) {
+                        updateChannelMembers(user.channelId);
+                    }
+
+                    // Remove the session
                     userSessions.splice(userIndex, 1);
                 }
 
